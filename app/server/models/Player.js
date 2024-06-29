@@ -5,7 +5,7 @@ const playerSchema = new mongoose.Schema({
   role: { type: String, required: true },
   class: { type: String, required: true },
   spec: { type: String, required: true },
-  offSpec: { type: String },
+  offspec: { type: String },
   teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 });

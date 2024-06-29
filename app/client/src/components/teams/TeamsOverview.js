@@ -18,14 +18,13 @@ const TeamsOverview = () => {
 
   const handleDropPlayer = async (playerId, newTeamId) => {
     await dispatch(updatePlayer({ id: playerId, updates: { teamId: newTeamId } }));
-    // Optimistically update the local state without re-fetching
     dispatch(updateLocalPlayer({ id: playerId, updates: { teamId: newTeamId } }));
   };
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold text-center mb-4">Teams Overview</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {teams.map(team => (
           <TeamCard
             key={team._id}
@@ -49,11 +48,11 @@ const TeamCard = ({ team, players, onDropPlayer }) => {
   }));
 
   return (
-    <div ref={drop} className={`p-6 border rounded-lg ${isOver ? 'bg-green-200' : 'bg-gray-100'}`}>
-      <h2 className="text-2xl font-bold mb-4">{team.name}</h2>
+    <div ref={drop} className={`p-4 border rounded-lg ${isOver ? 'bg-green-200' : 'bg-gray-100'} flex flex-col`}>
+      <h2 className="text-2xl font-bold mb-2">{team.name}</h2>
       <p className="text-gray-600 mb-4">{team.description}</p>
-      <div className="bg-white p-4 rounded" style={{ backgroundColor: team.color }}>
-        <div className="grid grid-cols-2 gap-4">
+      <div className="bg-white p-4 rounded flex-grow" style={{ backgroundColor: team.color }}>
+        <div className="grid grid-cols-1 gap-2">
           {players.map(player => (
             <DraggablePlayer
               key={player._id}
