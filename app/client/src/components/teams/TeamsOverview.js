@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useDrop } from 'react-dnd';
 import { fetchTeams } from '../../features/teams/teamsSlice';
-import { fetchPlayers, updatePlayer } from '../../features/players/playersSlice';
+import { fetchPlayers, updatePlayer, updateLocalPlayer } from '../../features/players/playersSlice';
 import DraggablePlayer from '../players/DraggablePlayer';
 import { roleIcons, classIcons, specIcons } from '../../icons';
 
@@ -11,8 +11,6 @@ const TeamsOverview = () => {
   const players = useSelector(state => state.players.players);
   const dispatch = useDispatch();
 
-  console.log(players)
-
   useEffect(() => {
     dispatch(fetchTeams());
     dispatch(fetchPlayers());
@@ -20,8 +18,8 @@ const TeamsOverview = () => {
 
   const handleDropPlayer = async (playerId, newTeamId) => {
     await dispatch(updatePlayer({ id: playerId, updates: { teamId: newTeamId } }));
-    dispatch(fetchTeams());
-    dispatch(fetchPlayers());
+    // Optimistically update the local state without re-fetching
+    dispatch(updateLocalPlayer({ id: playerId, updates: { teamId: newTeamId } }));
   };
 
   return (

@@ -7,7 +7,7 @@ export const fetchPlayers = createAsyncThunk('players/fetchPlayers', async () =>
 });
 
 export const updatePlayer = createAsyncThunk('players/updatePlayer', async ({ id, updates }) => {
-  const response = await axios.patch(`/api/players/${id}`, updates);
+  const response = await axios.patch(`/api/players/players/${id}`, updates);
   return response.data;
 });
 
@@ -22,6 +22,13 @@ const playersSlice = createSlice({
     },
     removePlayer: (state, action) => {
       state.players = state.players.filter(player => player._id !== action.payload);
+    },
+    updateLocalPlayer: (state, action) => {
+      const { id, updates } = action.payload;
+      const index = state.players.findIndex(player => player._id === id);
+      if (index !== -1) {
+        state.players[index] = { ...state.players[index], ...updates };
+      }
     },
   },
   extraReducers: (builder) => {
@@ -39,5 +46,5 @@ const playersSlice = createSlice({
   }
 });
 
-export const { addPlayer, removePlayer } = playersSlice.actions;
+export const { addPlayer, removePlayer, updateLocalPlayer } = playersSlice.actions;
 export default playersSlice.reducer;

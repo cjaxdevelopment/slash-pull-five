@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from '../../axiosConfig';
-import { useDrop } from 'react-dnd';
 import DraggablePlayer from '../players/DraggablePlayer';
 import { roleIcons, classIcons, specIcons } from '../../icons';
 import { roleOptions, classOptions, specOptions, classRoleOptions } from '../../playerOptions';
+import Spinner from '../Spinner'; // Import Spinner component
 
 const TeamDetails = () => {
   const { teamId } = useParams();
   const [team, setTeam] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true); // Add loading state
+  const [error, setError] = useState(null); // Add error state
   const [newPlayer, setNewPlayer] = useState({
     name: '',
     role: 'tank',
@@ -19,30 +21,25 @@ const TeamDetails = () => {
   });
   const [availableSpecs, setAvailableSpecs] = useState(specOptions.warrior);
   const [availableRoles, setAvailableRoles] = useState(classRoleOptions.warrior);
-  console.log(players)
-  useEffect(() => {
-    const fetchTeam = async () => {
-      console.log('teamId = ', teamId)
-      try {
-        const response = await axios.get(`/api/teams/${teamId}`);
-        setTeam(response.data);
-      } catch (error) {
-        console.error('Error fetching the team:', error);
-      }
-    };
 
-    const fetchPlayers = async () => {
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/teams/${teamId}/players`);
-        setPlayers(response.data);
-      } catch (error) {
-        console.error('Error fetching the players:', error);
+        const teamResponse = await axios.get(`/api/teams/${teamId}`);
+        setTeam(teamResponse.data);
+
+        const playersResponse = await axios.get(`/api/teams/${teamId}/players`);
+        setPlayers(playersResponse.data);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false); // Set loading to false after data is fetched or error occurs
       }
     };
 
     if (teamId) {
-      fetchTeam();
-      fetchPlayers();
+      fetchData();
     }
   }, [teamId]);
 
@@ -60,7 +57,7 @@ const TeamDetails = () => {
     if (newPlayer.name && newPlayer.role && newPlayer.class && newPlayer.spec && newPlayer.offspec) {
       const player = { ...newPlayer, teamId };
       try {
-        const response = await axios.post(`/api/players/${teamId}/players`, player);
+        const response = await axios.post(`/api/players`, player);
         setPlayers([...players, response.data]);
         setNewPlayer({ name: '', role: 'tank', class: 'warrior', spec: 'arms', offspec: 'fury' });
       } catch (error) {
@@ -69,28 +66,16 @@ const TeamDetails = () => {
     }
   };
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: 'PLAYER',
-    drop: (item) => handleDropPlayer(item.id),
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  }));
+  if (loading) {
+    return <Spinner />; // Use Spinner component while loading
+  }
 
-  const handleDropPlayer = async (playerId) => {
-    try {
-      await axios.patch(`/api/players/${playerId}`, { teamId });
-      const updatedPlayers = players.map(player =>
-        player._id === playerId ? { ...player, teamId } : player
-      );
-      setPlayers(updatedPlayers);
-    } catch (error) {
-      console.error('Error updating the player:', error);
-    }
-  };
+  if (error) {
+    return <div>Error: {error}</div>; // Show error message if an error occurs
+  }
 
   if (!team) {
-    return <div>Team not found</div>;
+    return <div>Team not found</div>; // Show team not found if no team data
   }
 
   return (
@@ -159,7 +144,7 @@ const TeamDetails = () => {
             Add Player
           </button>
         </div>
-        <div ref={drop} className={`p-4 rounded ${isOver ? 'bg-green-200' : 'bg-gray-100'}`}>
+        <div className="p-4 rounded bg-gray-100">
           <ul className="space-y-4">
             {players.map(player => (
               <li key={player._id}>

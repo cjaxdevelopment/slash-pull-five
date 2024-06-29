@@ -21,9 +21,11 @@ mongoose.connect(process.env.MONGODB_URI, {
 const authRoutes = require('./routes/auth');
 const teamRoutes = require('./routes/teams'); 
 const playerRoutes = require('./routes/players'); 
+const userRoutes = require('./routes/user');
 app.use('/api/auth', authRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/players', playerRoutes);
+app.use('/api/user', userRoutes); 
 
 
 // Serve static assets in production

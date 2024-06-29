@@ -7,6 +7,7 @@ import TeamsOverview from './components/teams/TeamsOverview';
 import Players from './components/players/Players';
 import Register from './components/Register';
 import Login from './components/Login';
+import Profile from './components/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -25,6 +26,7 @@ function App() {
             <Route path="/teams/:teamId" element={<TeamDetails />} />
             <Route path="/players" element={<Players />} />
             <Route path="/overview" element={<TeamsOverview />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
       </AuthProvider>

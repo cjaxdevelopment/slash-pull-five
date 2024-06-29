@@ -10,7 +10,7 @@ const Navbar = () => {
   const isLoginPage = location.pathname === '/login';
 
   return (
-    <nav className="bg-gray-800 p-4 text-white">
+    <nav className="bg-gray-800 p-4 text-white relative">
       <ul className="flex space-x-4">
         {!isLoginPage && (
           <>
@@ -20,25 +20,24 @@ const Navbar = () => {
             <li><Link to="/overview">Teams Overview</Link></li>
           </>
         )}
-        {user ? (
-          <li className="ml-auto relative group">
-            <div className="flex items-center space-x-2 cursor-pointer">
-              <img
-                src="https://via.placeholder.com/40"
-                alt="Profile"
-                className="w-8 h-8 rounded-full"
-              />
-              <span>{user.username}</span>
-              <div className="absolute right-0 mt-2 bg-white text-black rounded shadow-lg hidden group-hover:block">
-                <Link to="/profile" className="block px-4 py-2">Profile</Link>
-                <button onClick={logout} className="block px-4 py-2 text-left w-full">Logout</button>
-              </div>
-            </div>
-          </li>
-        ) : (
-          !isLoginPage && <li className="ml-auto"><Link to="/login">Login</Link></li>
+        {!user && !isLoginPage && (
+          <li className="ml-auto"><Link to="/login">Login</Link></li>
         )}
       </ul>
+      {user && (
+        <div className="absolute top-4 right-4 flex items-center space-x-2 group">
+          <img
+            src="https://via.placeholder.com/40"
+            alt="Profile"
+            className="w-8 h-8 rounded-full cursor-pointer"
+          />
+          <span className="cursor-pointer">{user.username}</span>
+          <div className="absolute right-0 mt-20 bg-white text-black rounded shadow-lg hidden group-hover:block z-50">
+            <Link to="/profile" className="block px-4 py-2">Profile</Link>
+            <button onClick={logout} className="block px-4 py-2 text-left w-full">Logout</button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

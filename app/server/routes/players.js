@@ -32,10 +32,10 @@ router.get('/:playerId', auth, async (req, res) => {
 
 // Add a new player
 router.post('/', auth, async (req, res) => {
-    const { name, role, class: playerClass, spec, offSpec } = req.body;
+    const { name, role, class: playerClass, spec, offSpec, teamId } = req.body;
     console.log('Creating player for user:', req.user._id); // Add this line
     try {
-      const player = new Player({ name, role, class: playerClass, spec, offSpec, userId: req.user._id });
+      const player = new Player({ name, role, class: playerClass, spec, offSpec, teamId: teamId, userId: req.user._id });
       await player.save();
       res.status(201).send(player);
     } catch (err) {
@@ -79,7 +79,7 @@ router.get('/:teamId/players', auth, async (req, res) => {
 // Update a player
 router.patch('/players/:playerId', auth, async (req, res) => {
   const updates = req.body;
-
+    console.log(updates)
   try {
     const player = await Player.findByIdAndUpdate(req.params.playerId, updates, { new: true });
     if (!player) return res.status(404).send('Player not found');

@@ -6,7 +6,8 @@ const playerSchema = new mongoose.Schema({
   class: { type: String, required: true },
   spec: { type: String, required: true },
   offSpec: { type: String },
-  teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' }
+  teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
 const Player = mongoose.model('Player', playerSchema);
