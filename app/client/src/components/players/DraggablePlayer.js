@@ -60,7 +60,7 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
         ref.current = node;
         drag(node);
       }}
-      className={`relative p-4 border rounded mb-2 flex justify-between items-center ${isDragging ? 'opacity-50' : ''}`}
+      className={`relative p-4 border mb-2 flex justify-between items-center ${isDragging ? 'opacity-50' : ''}`}
       style={{ cursor: 'move', backgroundColor }}
     >
       <div className="absolute top-0 left-0 w-4 h-4 z-20">
@@ -69,9 +69,9 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
       <div className="flex items-center space-x-2 w-full z-10">
         <span className="pl-1 font-bold truncate w-5/6 max-w-xs">{player.name}123123123</span>
       </div>
-      <div className="absolute inset-0 flex justify-end items-center pointer-events-none">
-        <div className="relative w-1/3 h-full">
-          <div className="absolute inset-0 bg-black opacity-50 transform"></div>
+      <div className="absolute inset-y-0 right-0 w-1/3 h-full overflow-hidden pointer-events-none">
+        <div className="relative w-full h-full transform -skew-x-12 origin-bottom-right scale-100">
+          <div className="absolute inset-0 bg-black opacity-50"></div>
           <img src={specIcons[player.spec]} alt={player.spec} className="absolute inset-0 w-full h-full object-cover opacity-50" />
         </div>
       </div>
