@@ -5,6 +5,10 @@ import { fetchTeams } from '../../features/teams/teamsSlice';
 import { fetchPlayers, updatePlayer, updateLocalPlayer } from '../../features/players/playersSlice';
 import DraggablePlayer from '../players/DraggablePlayer';
 import { roleIcons, classIcons, specIcons } from '../../icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { Tooltip } from 'react-tippy';
+import 'tippy.js/dist/tippy.css';
 
 const TeamsOverview = () => {
   const teams = useSelector(state => state.teams.teams);
@@ -47,12 +51,31 @@ const TeamCard = ({ team, players, onDropPlayer }) => {
     }),
   }));
 
+  const totalBuffs = 10; // Assuming 10 buffs are required
+  const coveredBuffs = players.length; // This is a simplification, replace with actual logic
+  const missingBuffs = totalBuffs - coveredBuffs;
+
+  const missingBuffsList = ["Buff1", "Buff2"]; // Replace with actual missing buffs
+
   return (
-    <div ref={drop} className={`p-4 border rounded-lg ${isOver ? 'bg-green-200' : 'bg-gray-100'} flex flex-col`}>
-      <h2 className="text-2xl font-bold mb-2">{team.name}</h2>
+    <div ref={drop} className={`relative min-w-[400px] max-w-[500px] p-6 border rounded-lg ${isOver ? 'bg-green-200' : 'bg-gray-100'} flex flex-col`}>
+      <div className="flex justify-between items-start mb-2">
+        <h2 className="text-2xl font-bold">{team.name}</h2>
+        <div className="flex items-center space-x-2">
+          <p className="text-gray-600">{coveredBuffs}/{totalBuffs} Buffs Covered</p>
+          <Tooltip
+            title={`Missing Buffs: ${missingBuffsList.join(", ")}`}
+            position="top"
+            trigger="mouseenter"
+            arrow={true}
+          >
+            <FontAwesomeIcon icon={faInfoCircle} className="text-gray-600 cursor-pointer" />
+          </Tooltip>
+        </div>
+      </div>
       <p className="text-gray-600 mb-4">{team.description}</p>
       <div className="bg-white p-4 rounded flex-grow" style={{ backgroundColor: team.color }}>
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-2 gap-4">
           {players.map(player => (
             <DraggablePlayer
               key={player._id}
