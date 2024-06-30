@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
-import axios from '../../axiosConfig'; // Import axios for fetching player details
+import axios from '../../axiosConfig';
+import { useDispatch } from 'react-redux';
+import { updatePlayer } from '../../features/players/playersSlice';
+import { classOptions, roleOptions, specOptions, classRoleOptions } from '../../playerOptions';
 
 const classColors = {
   death_knight: '#C41F3B',
@@ -19,13 +22,19 @@ const classColors = {
 
 const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
   const [player, setPlayer] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [availableSpecs, setAvailableSpecs] = useState([]);
+  const [availableRoles, setAvailableRoles] = useState([]);
   const ref = useRef(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchPlayer = async () => {
       try {
         const response = await axios.get(`/api/players/${playerId}`);
         setPlayer(response.data);
+        setAvailableSpecs(specOptions[response.data.class]);
+        setAvailableRoles(classRoleOptions[response.data.class]);
       } catch (error) {
         console.error('Error fetching player details:', error);
       }
@@ -33,6 +42,13 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
 
     fetchPlayer();
   }, [playerId]);
+
+  useEffect(() => {
+    if (player && player.class) {
+      setAvailableSpecs(specOptions[player.class]);
+      setAvailableRoles(classRoleOptions[player.class]);
+    }
+  }, [player]);
 
   const [{ isDragging }, drag, preview] = useDrag(() => ({
     type: 'PLAYER',
@@ -48,6 +64,19 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
     }
   }, [preview]);
 
+  const handleUpdatePlayer = async () => {
+    if (player.name && player.role && player.class && player.spec) {
+      try {
+        const response = await axios.patch(`/api/players/players/${playerId}`, player);
+        console.log('Update response:', response.data);
+        dispatch(updatePlayer({ id: playerId, updates: response.data }));
+        setIsEditing(false);
+      } catch (error) {
+        console.error('Error updating player:', error);
+      }
+    }
+  };
+
   if (!player) {
     return <div>Loading...</div>;
   }
@@ -60,14 +89,15 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
         ref.current = node;
         drag(node);
       }}
-      className={`relative p-4 border mb-2 flex justify-between items-center ${isDragging ? 'opacity-50' : ''}`}
-      style={{ cursor: 'move', backgroundColor }}
+      className={`relative p-4 border mb-2 flex flex-col ${isDragging ? 'opacity-50' : ''} ${isEditing ? 'w-full col-span-full' : 'col-span-1'}`}
+      style={{ backgroundColor }}
+      onClick={() => setIsEditing(!isEditing)}
     >
-      <div className="absolute top-0 left-0 w-4 h-4 z-20">
-        <img src={roleIcons[player.role]} alt={player.role} className="w-full h-full object-cover" />
-      </div>
       <div className="flex items-center space-x-2 w-full z-10">
-        <span className="pl-1 font-bold truncate w-5/6 max-w-xs">{player.name}123123123</span>
+        <div className="absolute top-0 left-0 w-4 h-4 z-20">
+          <img src={roleIcons[player.role]} alt={player.role} className="w-full h-full object-cover" />
+        </div>
+        <span className="pl-6 font-bold truncate w-5/6 max-w-xs">{player.name}</span>
       </div>
       <div className="absolute inset-y-0 right-0 w-1/3 h-full overflow-hidden pointer-events-none">
         <div className="relative w-full h-full transform -skew-x-12 origin-bottom-right scale-100">
@@ -75,6 +105,68 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
           <img src={specIcons[player.spec]} alt={player.spec} className="absolute inset-0 w-full h-full object-cover opacity-50" />
         </div>
       </div>
+      {isEditing && (
+        <div className="mt-2 w-2/3" onClick={(e) => e.stopPropagation()}>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="text"
+              value={player.name}
+              onChange={(e) => setPlayer({ ...player, name: e.target.value })}
+              className="border p-2 rounded"
+            />
+            <select
+              value={player.class}
+              onChange={(e) => setPlayer({ ...player, class: e.target.value })}
+              className="border p-2 rounded"
+            >
+              {classOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={player.role}
+              onChange={(e) => setPlayer({ ...player, role: e.target.value })}
+              className="border p-2 rounded"
+            >
+              {availableRoles.map(role => (
+                <option key={role} value={role}>
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </option>
+              ))}
+            </select>
+            <select
+              value={player.spec}
+              onChange={(e) => setPlayer({ ...player, spec: e.target.value })}
+              className="border p-2 rounded"
+            >
+              {availableSpecs.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={player.offspec}
+              onChange={(e) => setPlayer({ ...player, offspec: e.target.value })}
+              className="border p-2 rounded"
+            >
+              {availableSpecs.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={handleUpdatePlayer}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-200 mt-2"
+          >
+            Save
+          </button>
+        </div>
+      )}
     </div>
   );
 };

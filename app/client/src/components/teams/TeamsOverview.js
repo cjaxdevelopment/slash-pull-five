@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { Tooltip } from 'react-tippy';
 import 'tippy.js/dist/tippy.css';
+import { calculateBuffs, allBuffs } from '../../playerBuffs';
 
 const TeamsOverview = () => {
   const teams = useSelector(state => state.teams.teams);
@@ -51,20 +52,27 @@ const TeamCard = ({ team, players, onDropPlayer }) => {
     }),
   }));
 
-  const totalBuffs = 10; // Assuming 10 buffs are required
-  const coveredBuffs = players.length; // This is a simplification, replace with actual logic
-  const missingBuffs = totalBuffs - coveredBuffs;
+  const { coveredBuffs, missingBuffs } = calculateBuffs(players);
 
-  const missingBuffsList = ["Buff1", "Buff2"]; // Replace with actual missing buffs
+  const tooltipContent = (
+    <div style={{ backgroundColor: 'white', padding: '10px', borderRadius: '5px', color: 'black' }}>
+      <strong>Missing Buffs:</strong>
+      <ul>
+        {missingBuffs.map(buff => (
+          <li key={buff}>{buff}</li>
+        ))}
+      </ul>
+    </div>
+  );
 
   return (
     <div ref={drop} className={`relative min-w-[400px] max-w-[500px] p-6 border rounded-lg ${isOver ? 'bg-green-200' : 'bg-gray-100'} flex flex-col`}>
       <div className="flex justify-between items-start mb-2">
         <h2 className="text-2xl font-bold">{team.name}</h2>
         <div className="flex items-center space-x-2">
-          <p className="text-gray-600">{coveredBuffs}/{totalBuffs} Buffs Covered</p>
+          <p className="text-gray-600">{coveredBuffs}/{allBuffs.length} Buffs Covered</p>
           <Tooltip
-            title={`Missing Buffs: ${missingBuffsList.join(", ")}`}
+            html={tooltipContent}
             position="top"
             trigger="mouseenter"
             arrow={true}
