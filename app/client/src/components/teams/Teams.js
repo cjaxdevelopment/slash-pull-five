@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { addTeam, removeTeam, updateTeam, fetchTeams } from '../../features/teams/teamsSlice';
+import { addTeam, deleteTeam, updateTeam, fetchTeams } from '../../features/teams/teamsSlice';
 import axios from '../../axiosConfig';
 
 const presetColors = [
-  { name: 'Red', value: '#ff0000' },
-  { name: 'Blue', value: '#0000ff' },
-  { name: 'Green', value: '#008000' },
-  { name: 'Yellow', value: '#ffff00' },
-  { name: 'Purple', value: '#800080' },
-  { name: 'Orange', value: '#ffa500' },
-  { name: 'Pink', value: '#ffc0cb' },
-  { name: 'Gray', value: '#808080' }
+  { name: 'Dark Red', value: '#8B0000' },
+  { name: 'Dark Blue', value: '#00008B' },
+  { name: 'Dark Green', value: '#006400' },
+  { name: 'Gold', value: '#FFD700' },
+  { name: 'Dark Purple', value: '#4B0082' },
+  { name: 'Dark Orange', value: '#FF8C00' },
+  { name: 'Hot Pink', value: '#FF69B4' },
+  { name: 'Dim Gray', value: '#696969' }
 ];
 
 const Teams = () => {
@@ -27,17 +27,23 @@ const Teams = () => {
 
   const handleAddTeam = async () => {
     if (newTeam.name && newTeam.description) {
-      const response = await axios.post('/api/teams', newTeam);
-      dispatch(addTeam(response.data));
-      setNewTeam({ name: '', description: '', color: presetColors[0].value });
+      try {
+        await dispatch(addTeam(newTeam)).unwrap();
+        setNewTeam({ name: '', description: '', color: presetColors[0].value });
+      } catch (error) {
+        console.error('Error adding team:', error);
+      }
     }
   };
 
   const handleUpdateTeam = async (id) => {
     if (editingTeam.name && editingTeam.description) {
-      await axios.patch(`/api/teams/${id}`, editingTeam);
-      dispatch(updateTeam({ id, updates: editingTeam }));
-      setEditingTeam(null);
+      try {
+        await dispatch(updateTeam({ id, updates: editingTeam })).unwrap();
+        setEditingTeam(null);
+      } catch (error) {
+        console.error('Error updating team:', error);
+      }
     }
   };
 
@@ -142,7 +148,7 @@ const Teams = () => {
                     Edit
                   </button>
                   <button
-                    onClick={() => dispatch(removeTeam(team._id))}
+                    onClick={() => dispatch(deleteTeam(team._id))}
                     className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200"
                   >
                     Remove

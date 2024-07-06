@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import axios from '../../axiosConfig';
 import { useDispatch } from 'react-redux';
-import { updatePlayer } from '../../features/players/playersSlice';
+import { updatePlayer, deletePlayer } from '../../features/players/playersSlice';
 import { classOptions, roleOptions, specOptions, classRoleOptions } from '../../playerOptions';
 
 const classColors = {
@@ -68,12 +68,19 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
     if (player.name && player.role && player.class && player.spec) {
       try {
         const response = await axios.patch(`/api/players/players/${playerId}`, player);
-        console.log('Update response:', response.data);
         dispatch(updatePlayer({ id: playerId, updates: response.data }));
         setIsEditing(false);
       } catch (error) {
         console.error('Error updating player:', error);
       }
+    }
+  };
+
+  const handleRemovePlayer = async () => {
+    try {
+      await dispatch(deletePlayer(playerId));
+    } catch (error) {
+      console.error('Error removing player:', error);
     }
   };
 
@@ -89,15 +96,15 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
         ref.current = node;
         drag(node);
       }}
-      className={`relative p-4 border mb-2 flex flex-col ${isDragging ? 'opacity-50' : ''} ${isEditing ? 'w-full col-span-full' : 'col-span-1'}`}
+      className={`relative p-4 border mb-2 flex flex-col ${isDragging ? 'opacity-50' : ''} ${isEditing ? 'w-full col-span-full' : 'col-span-1'} bg-white rounded-lg shadow-sm hover:bg-gray-100 transition-colors duration-200`}
       style={{ backgroundColor }}
       onClick={() => setIsEditing(!isEditing)}
     >
       <div className="flex items-center space-x-2 w-full z-10">
         <div className="absolute top-0 left-0 w-4 h-4 z-20">
-          <img src={roleIcons[player.role]} alt={player.role} className="w-full h-full object-cover" />
+          <img src={roleIcons[player.role]} alt={player.role} className="object-cover" />
         </div>
-        <span className="pl-6 font-bold truncate w-5/6 max-w-xs">{player.name}</span>
+        <span className="pl-2 font-bold truncate w-5/6 max-w-xs">{player.name}</span>
       </div>
       <div className="absolute inset-y-0 right-0 w-1/3 h-full overflow-hidden pointer-events-none">
         <div className="relative w-full h-full transform -skew-x-12 origin-bottom-right scale-100">
@@ -159,12 +166,20 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
               ))}
             </select>
           </div>
-          <button
-            onClick={handleUpdatePlayer}
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-200 mt-2"
-          >
-            Save
-          </button>
+          <div className="flex space-x-2 mt-2">
+            <button
+              onClick={handleUpdatePlayer}
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-200"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleRemovePlayer}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200"
+            >
+              Remove
+            </button>
+          </div>
         </div>
       )}
     </div>

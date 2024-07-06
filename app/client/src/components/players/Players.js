@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from '../../axiosConfig';
-import { fetchPlayers, addPlayer, removePlayer, updatePlayer } from '../../features/players/playersSlice';
+import { fetchPlayers, addPlayer, deletePlayer, updatePlayer } from '../../features/players/playersSlice';
 import { classOptions, roleOptions, specOptions, classRoleOptions } from '../../playerOptions';
 
 const Players = () => {
@@ -75,7 +75,7 @@ const Players = () => {
             )}
             <div className="flex space-x-2">
               <button
-                onClick={() => dispatch(removePlayer(player._id))}
+                onClick={() => dispatch(deletePlayer(player._id))}
                 className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200"
               >
                 Remove

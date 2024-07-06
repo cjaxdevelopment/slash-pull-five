@@ -77,7 +77,7 @@ router.get('/:teamId/players', auth, async (req, res) => {
 });
 
 // Update a player
-router.patch('/players/:playerId', auth, async (req, res) => {
+router.patch('/:playerId', auth, async (req, res) => {
   const updates = req.body;
   try {
     const player = await Player.findByIdAndUpdate(req.params.playerId, updates, { new: true });
@@ -89,7 +89,7 @@ router.patch('/players/:playerId', auth, async (req, res) => {
 });
 
 // Remove a player
-router.delete('/players/:playerId', auth, async (req, res) => {
+router.delete('/:playerId', auth, async (req, res) => {
   try {
     const player = await Player.findByIdAndDelete(req.params.playerId);
     if (!player) return res.status(404).send('Player not found');

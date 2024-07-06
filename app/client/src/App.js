@@ -10,22 +10,19 @@ import Login from './components/Login';
 import Profile from './components/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/Navbar';
 
 function App() {
   return (
     <div className="App">
       <AuthProvider>
-        <Navbar />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<TeamsOverview />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/:teamId" element={<TeamDetails />} />
             <Route path="/players" element={<Players />} />
-            <Route path="/overview" element={<TeamsOverview />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
