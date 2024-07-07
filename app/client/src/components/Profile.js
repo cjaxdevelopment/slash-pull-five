@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 
-
 const Profile = () => {
   const { user } = useAuth();
   const [userData, setUserData] = useState(null);
@@ -10,28 +9,31 @@ const Profile = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const response = await fetch(`/api/user/${user.userId}`);
-      const data = await response.json();
-      setUserData(data);
-      setUsername(data.username);
-    };
+  const fetchUserData = async () => {
+    const response = await fetch(`/api/user/${user.userId}`);
+    const data = await response.json();
+    setUserData(data);
+    setUsername(data.username);
+  };
 
+  useEffect(() => {
     fetchUserData();
   }, [user.userId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await fetch(`/api/users/${user.userId}`, {
+    const token = localStorage.getItem('token'); // Assuming you are storing the token in localStorage
+    await fetch(`/api/user/${user.userId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`, // Include the token in the header
       },
       body: JSON.stringify({ username, password }),
     });
     setIsEditing(false);
     alert('Profile updated successfully!');
+    fetchUserData(); // Refetch user data after updating
   };
 
   if (!userData) {

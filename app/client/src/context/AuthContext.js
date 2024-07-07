@@ -31,6 +31,13 @@ const AuthProvider = ({ children }) => {
     setUser(null);
     delete axios.defaults.headers.common['Authorization'];
   };
+  
+  const updateUser = (updatedUser) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      ...updatedUser,
+    }));
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
