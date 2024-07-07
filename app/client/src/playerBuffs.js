@@ -33,7 +33,8 @@ const classToBuffs = {
     'Rallying Cry',
     'Immunities',
     'Healthstone',
-    'Mass Dispel'
+    'Mass Dispel',
+    'Darkness'
     ];
 
     const calculateBuffs = (players) => {
