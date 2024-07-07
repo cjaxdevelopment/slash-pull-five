@@ -8,6 +8,7 @@ export const roleIcons = {
     death_knight: 'https://wow.zamimg.com/images/wow/icons/large/spell_deathknight_classicon.jpg',
     demon_hunter: 'https://wow.zamimg.com/images/wow/icons/large/achievement_boss_illidan.jpg',
     druid: 'https://wow.zamimg.com/images/wow/icons/large/classicon_druid.jpg',
+    evoker: 'https://wow.zamimg.com/images/wow/icons/large/classicon_evoker.jpg',
     hunter: 'https://wow.zamimg.com/images/wow/icons/large/classicon_hunter.jpg',
     mage: 'https://wow.zamimg.com/images/wow/icons/large/classicon_mage.jpg',
     monk: 'https://wow.zamimg.com/images/wow/icons/large/classicon_monk.jpg',
@@ -34,6 +35,11 @@ export const roleIcons = {
     feral: 'https://wow.zamimg.com/images/wow/icons/large/ability_druid_catform.jpg',
     guardian: 'https://wow.zamimg.com/images/wow/icons/large/ability_racial_bearform.jpg',
     restoration: 'https://wow.zamimg.com/images/wow/icons/large/spell_nature_healingtouch.jpg',
+
+    // Evoker
+    devastation: 'https://wow.zamimg.com/images/wow/icons/large/spell_evoker_devastation.jpg',
+    augmentation: 'https://wow.zamimg.com/images/wow/icons/large/spell_evoker_augmentation.jpg',
+    preservation: 'https://wow.zamimg.com/images/wow/icons/large/spell_evoker_preservation.jpg',
   
     // Hunter
     beast_mastery: 'https://wow.zamimg.com/images/wow/icons/large/ability_hunter_bestialdiscipline.jpg',
