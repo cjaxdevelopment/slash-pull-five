@@ -67,7 +67,7 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
   const handleUpdatePlayer = async () => {
     if (player.name && player.role && player.class && player.spec) {
       try {
-        const response = await axios.patch(`/api/players/players/${playerId}`, player);
+        const response = await axios.patch(`/api/players/${playerId}`, player);
         dispatch(updatePlayer({ id: playerId, updates: response.data }));
         setIsEditing(false);
       } catch (error) {

@@ -1,17 +1,17 @@
 const classToBuffs = {
-        death_knight: [ 'Battle Res' ],
-        demon_hunter: [ 'Chaos Brand' ],
-        druid: [ 'Mark of the Wild', 'Battle Res' ],
-        evoker: [ 'Movement Speed' ],
-        hunter: [],
-        mage: [ 'Intellect' ],
+        death_knight: [ 'Battle Res', 'Immunities' ],
+        demon_hunter: [ 'Chaos Brand', 'Darkness', 'Immunities' ],
+        druid: [ 'Mark of the Wild', 'Battle Res', 'Raid Burst Move Speed' ],
+        evoker: [ 'Movement Speed', 'Bloodlust', 'Raid Burst Move Speed' ],
+        hunter: [ 'Bloodlust', 'Immunities' ],
+        mage: [ 'Intellect', 'Bloodlust', 'Immunities' ],
         monk: [ 'Mystic Touch' ],
-        paladin: [ 'Battle Res' ],
-        priest: [ 'Stamina' ],
-        rogue: [],
-        shaman: [],
-        warlock: [ 'Battle Res' ],
-        warrior: [ 'Attack Power' ]
+        paladin: [ 'Battle Res', 'Devo Aura', 'Blessing of Protection', 'Immunities' ],
+        priest: [ 'Stamina', 'Mass Dispel' ],
+        rogue: [ 'Boss DR', 'Immunities' ],
+        shaman: [ 'Bloodlust', 'Raid Burst Move Speed', 'Skyfury Totem' ],
+        warlock: [ 'Battle Res', 'Healthstone' ],
+        warrior: [ 'Attack Power', 'Rallying Cry' ]
     };
     
     const allBuffs = [
@@ -23,6 +23,15 @@ const classToBuffs = {
     'Mystic Touch',
     'Chaos Brand',
     'Battle Res',
+    'Devo Aura',
+    'Bloodlust',
+    'Raid Burst Move Speed',
+    'Skyfury Totem',
+    'Healthstone',
+    'Blessing of Protection',
+    'Boss DR',
+    'Rallying Cry',
+    'Immunities',
     ];
 
     const calculateBuffs = (players) => {

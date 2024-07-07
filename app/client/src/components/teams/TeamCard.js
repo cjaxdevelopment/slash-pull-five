@@ -8,6 +8,7 @@ import { Tooltip } from 'react-tippy';
 import 'tippy.js/dist/tippy.css';
 import { calculateBuffs, allBuffs } from '../../playerBuffs';
 import AddPlayerCard from './AddPlayerCard';
+import { presetColors } from '../../utils/presetColors'; // Import shared colors
 
 const TeamCard = ({ team, players, onDropPlayer, onAddPlayer, onEditTeam, onDeleteTeam }) => {
   const [{ isOver }, drop] = useDrop(() => ({
@@ -61,12 +62,16 @@ const TeamCard = ({ team, players, onDropPlayer, onAddPlayer, onEditTeam, onDele
             onChange={(e) => setEditedTeam({ ...editedTeam, description: e.target.value })}
             className="border p-2 rounded w-full mb-2"
           />
-          <input
-            type="color"
-            value={editedTeam.color}
-            onChange={(e) => setEditedTeam({ ...editedTeam, color: e.target.value })}
-            className="border p-2 rounded w-full mb-2"
-          />
+          <div className="flex space-x-2 mb-2">
+            {presetColors.map(color => (
+              <div
+                key={color.value}
+                className={`w-8 h-8 rounded-full cursor-pointer ${editedTeam.color === color.value ? 'w-12 h-12 ring-2 ring-black' : ''}`}
+                style={{ backgroundColor: color.value }}
+                onClick={() => setEditedTeam({ ...editedTeam, color: color.value })}
+              />
+            ))}
+          </div>
           <button
             onClick={handleSaveEdit}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200"

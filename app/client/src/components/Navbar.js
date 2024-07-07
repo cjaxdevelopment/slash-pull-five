@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faUser } from '@fortawesome/free-solid-svg-icons';
 
 const Navbar = ({ onAddTeamClick, showAddTeamButton = true }) => {
   const { user, logout } = useAuth();
@@ -37,10 +37,10 @@ const Navbar = ({ onAddTeamClick, showAddTeamButton = true }) => {
           )}
           {user && (
             <div className="relative flex items-center space-x-2 group">
-              <img
-                src="https://via.placeholder.com/40"
-                alt="Profile"
-                className="w-8 h-8 rounded-full cursor-pointer"
+              <FontAwesomeIcon
+                icon={faUser}
+                size="2x"
+                className="text-white cursor-pointer"
               />
               <span className="cursor-pointer">{user.username}</span>
               <div className="absolute right-0 mt-12 bg-white text-black rounded shadow-lg hidden group-hover:block z-50">
