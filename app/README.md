@@ -2,13 +2,12 @@
 
 ## Introduction
 
-Slash Pull Five is a web application designed to streamline team and roster management for gaming communities. Built using React and Tailwind CSS, it offers an intuitive interface for managing team members, roles, and scheduling events.
+Slash Pull Five is a web application designed to streamline team and roster management for gaming communities (Initially supporting World of Warcraft). Built using React and Tailwind CSS, it offers an intuitive interface for managing team members, roles, and scheduling events.
 
 ## Features
 
 - **Team Management:** Add, edit, and remove team members.
-- **Role Assignment:** Assign roles to team members.
-- **Event Scheduling:** Create and manage team events.
+- **Role Assignment:** Assign roles, classes, and specs to team members.
 - **Responsive Design:** Optimized for both desktop and mobile devices.
 
 ## Getting Started
