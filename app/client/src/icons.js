@@ -37,9 +37,9 @@ export const roleIcons = {
     restoration: 'https://wow.zamimg.com/images/wow/icons/large/spell_nature_healingtouch.jpg',
 
     // Evoker
-    devastation: 'https://wow.zamimg.com/images/wow/icons/large/spell_evoker_devastation.jpg',
-    augmentation: 'https://wow.zamimg.com/images/wow/icons/large/spell_evoker_augmentation.jpg',
-    preservation: 'https://wow.zamimg.com/images/wow/icons/large/spell_evoker_preservation.jpg',
+    devastation: 'https://wow.zamimg.com/images/wow/icons/large/classicon_evoker_devastation.jpg',
+    augmentation: 'https://wow.zamimg.com/images/wow/icons/large/classicon_evoker_augmentation.jpg',
+    preservation: 'https://wow.zamimg.com/images/wow/icons/large/classicon_evoker_preservation.jpg',
   
     // Hunter
     beast_mastery: 'https://wow.zamimg.com/images/wow/icons/large/ability_hunter_bestialdiscipline.jpg',
