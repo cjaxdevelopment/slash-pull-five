@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import axios from '../../axiosConfig';
 import DraggablePlayer from '../players/DraggablePlayer';
 import { roleIcons, classIcons, specIcons } from '../../icons';
-import { roleOptions, classOptions, specOptions, classRoleOptions } from '../../playerOptions';
-import Spinner from '../Spinner'; // Import Spinner component
+import { classOptions, specOptions, classRoleOptions } from '../../playerOptions';
+import Spinner from '../Spinner';
 
 const TeamDetails = () => {
   const { teamId } = useParams();

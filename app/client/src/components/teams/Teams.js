@@ -2,18 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { addTeam, deleteTeam, updateTeam, fetchTeams } from '../../features/teams/teamsSlice';
-import axios from '../../axiosConfig';
-
-const presetColors = [
-  { name: 'Dark Red', value: '#8B0000' },
-  { name: 'Dark Blue', value: '#00008B' },
-  { name: 'Dark Green', value: '#006400' },
-  { name: 'Gold', value: '#FFD700' },
-  { name: 'Dark Purple', value: '#4B0082' },
-  { name: 'Dark Orange', value: '#FF8C00' },
-  { name: 'Hot Pink', value: '#FF69B4' },
-  { name: 'Dim Gray', value: '#696969' }
-];
+import { presetColors } from '../../utils/presetColors'; // Import shared colors
 
 const Teams = () => {
   const teams = useSelector(state => state.teams.teams);

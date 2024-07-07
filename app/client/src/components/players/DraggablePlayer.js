@@ -3,24 +3,10 @@ import { useDrag } from 'react-dnd';
 import axios from '../../axiosConfig';
 import { useDispatch } from 'react-redux';
 import { updatePlayer, deletePlayer } from '../../features/players/playersSlice';
-import { classOptions, roleOptions, specOptions, classRoleOptions } from '../../playerOptions';
+import { classOptions, specOptions, classRoleOptions } from '../../playerOptions';
+import { classColors } from '../../utils/classColors';
 
-const classColors = {
-  death_knight: '#C41F3B',
-  demon_hunter: '#A330C9',
-  druid: '#FF7D0A',
-  hunter: '#ABD473',
-  mage: '#69CCF0',
-  monk: '#00FF96',
-  paladin: '#F58CBA',
-  priest: '#FFFFFF',
-  rogue: '#FFF569',
-  shaman: '#0070DE',
-  warlock: '#9482C9',
-  warrior: '#C79C6E',
-};
-
-const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
+const DraggablePlayer = ({ playerId, roleIcons, specIcons }) => {
   const [player, setPlayer] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [availableSpecs, setAvailableSpecs] = useState([]);
@@ -157,7 +143,7 @@ const DraggablePlayer = ({ playerId, roleIcons, classIcons, specIcons }) => {
             <select
               value={player.offspec}
               onChange={(e) => setPlayer({ ...player, offspec: e.target.value })}
-              className="border p-2 rounded"
+              className="border p-2 w-1/2 rounded col-span-2 col-start-2"
             >
               {availableSpecs.map(option => (
                 <option key={option.value} value={option.value}>

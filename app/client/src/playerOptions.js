@@ -1,9 +1,3 @@
-export const roleOptions = [
-    { name: 'Tank', value: 'tank' },
-    { name: 'Healer', value: 'healer' },
-    { name: 'DPS', value: 'dps' }
-  ];
-  
   export const classOptions = [
     { name: 'Death Knight', value: 'death_knight' },
     { name: 'Demon Hunter', value: 'demon_hunter' },

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from '../../axiosConfig';
 import { fetchPlayers, addPlayer, deletePlayer, updatePlayer } from '../../features/players/playersSlice';
-import { classOptions, roleOptions, specOptions, classRoleOptions } from '../../playerOptions';
+import { classOptions, specOptions, classRoleOptions } from '../../playerOptions';
 
 const Players = () => {
   const players = useSelector(state => state.players.players);
