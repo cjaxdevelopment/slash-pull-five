@@ -75,19 +75,25 @@ const TeamsOverview = () => {
     <div>
       <Navbar onAddTeamClick={() => setIsAddTeamModalOpen(true)} showAddTeamButton={true} />
       <div className="container mx-auto p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {teams.map(team => (
-            <TeamCard
-              key={team._id}
-              team={team}
-              players={players.filter(player => player.teamId === team._id)}
-              onDropPlayer={handleDropPlayer}
-              onAddPlayer={(newPlayer) => handleAddPlayer(newPlayer, team._id)}
-              onEditTeam={handleEditTeam}
-              onDeleteTeam={handleOpenModal}
-            />
-          ))}
-        </div>
+        {teams.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <p className="text-lg text-gray-700 mb-4">No teams available. Please add a team using the button above.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teams.map(team => (
+              <TeamCard
+                key={team._id}
+                team={team}
+                players={players.filter(player => player.teamId === team._id)}
+                onDropPlayer={handleDropPlayer}
+                onAddPlayer={(newPlayer) => handleAddPlayer(newPlayer, team._id)}
+                onEditTeam={handleEditTeam}
+                onDeleteTeam={handleOpenModal}
+              />
+            ))}
+          </div>
+        )}
         <AddTeamModal
           isOpen={isAddTeamModalOpen}
           onClose={() => setIsAddTeamModalOpen(false)}
