@@ -32,7 +32,6 @@ const classToBuffs = {
     'Boss DR',
     'Rallying Cry',
     'Immunities',
-    'Healthstone',
     'Mass Dispel',
     'Darkness'
     ];
