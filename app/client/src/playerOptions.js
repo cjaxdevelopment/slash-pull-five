@@ -2,6 +2,7 @@
     { name: 'Death Knight', value: 'death_knight' },
     { name: 'Demon Hunter', value: 'demon_hunter' },
     { name: 'Druid', value: 'druid' },
+    { name: 'Evoker', value: 'evoker' },
     { name: 'Hunter', value: 'hunter' },
     { name: 'Mage', value: 'mage' },
     { name: 'Monk', value: 'monk' },
@@ -17,6 +18,7 @@
     death_knight: ['tank', 'dps'],
     demon_hunter: ['tank', 'dps'],
     druid: ['tank', 'healer', 'dps'],
+    evoker: [ 'healer', 'dps' ],
     hunter: ['dps'],
     mage: ['dps'],
     monk: ['tank', 'healer', 'dps'],
@@ -43,6 +45,11 @@
       { name: 'Feral', value: 'feral' },
       { name: 'Guardian', value: 'guardian' },
       { name: 'Restoration', value: 'restoration' }
+    ],
+    evoker: [
+      { name: 'Devastation', value: 'devastation' },
+      { name: 'Augmentation', value: 'augmentation' },
+      { name: 'Preservation', value: 'preservation' },
     ],
     hunter: [
       { name: 'Beast Mastery', value: 'beast_mastery' },

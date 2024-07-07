@@ -2,6 +2,7 @@ export const classColors = {
     death_knight: '#C41F3B',
     demon_hunter: '#A330C9',
     druid: '#FF7D0A',
+    evoker: '#33937F',
     hunter: '#ABD473',
     mage: '#69CCF0',
     monk: '#00FF96',
