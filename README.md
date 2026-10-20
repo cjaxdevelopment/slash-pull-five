@@ -9,7 +9,7 @@ A private raid composition planner. Each login has its own characters and saved 
 - Exact slot placement and occupied-slot swaps, including between full groups. Dropping a pool character or spec onto an occupied slot returns its previous occupant to the pool.
 - Separate Buffs, Debuffs, and Utility views, with pet support, conditional talents, and small party-buff badges beside groups.
 - Read-only snapshot links that work without signing in.
-- Light/dark toggle on sign-in and in the header. Follows the system theme initially and remembers your choice in this browser.
+- Light/dark toggle on sign-in and in the header. Follows the system theme initially and remembers the selected theme in this browser.
 - Plain username/password sign-in.
 - Separate private planners per account. Revision checks prevent an older browser tab from overwriting newer changes. Share links provide read-only viewing.
 
@@ -42,7 +42,7 @@ Copy `.env.example` to `.env`. On PowerShell:
 Copy-Item .env.example .env
 ```
 
-Fill in `BOOTSTRAP_USERNAME`, `BOOTSTRAP_PASSWORD` (12–128 characters), and `BOOTSTRAP_GUILD_NAME`. Set your guild's region, faction, and ruleset. Usernames use 2–40 letters, numbers, dots, underscores, or hyphens; sign-in ignores case. Choose a unique password; there are no default accounts or passwords.
+Fill in `BOOTSTRAP_USERNAME`, `BOOTSTRAP_PASSWORD` (12–128 characters), and `BOOTSTRAP_GUILD_NAME`. Set the workspace's region, faction, and ruleset. Usernames use 2–40 letters, numbers, dots, underscores, or hyphens; sign-in ignores case. Choose a unique password; there are no default accounts or passwords.
 
 ```sh
 npm run db:bootstrap
@@ -67,19 +67,19 @@ To permanently remove an unwanted character, use the trash icon in the character
 
 ### Private accounts
 
-You, Bru, CT, and Peko use the same app URL and separate logins. Each account owns its own planner and cannot see or edit another account's saved data. Public sign-up and shared-edit invitations are disabled. A private `/plans/...` URL does not grant access; use **Share link** for a read-only snapshot, or send a screenshot.
+Each account owns a private planner and cannot see or edit another account's saved data. Public sign-up and shared-edit invitations are disabled. A private `/plans/...` URL does not grant access; use **Share link** for a read-only snapshot, or send a screenshot.
 
-After the initial account exists, stop the local dev server and run:
+To create an additional account, set `ACCOUNT_USERNAME` and `ACCOUNT_PASSWORD` in the root `.env`, stop the local server if using PGlite, and run:
 
 ```sh
-npm run db:seed-accounts
+npm run db:create-account
 ```
 
-This creates `bru`, `ct`, and `peko` with separate empty planners and generated passwords. Login details are saved in a private, ignored `.local/rewound-logins-*.txt` file; give each person only their own login. Existing accounts, passwords, and rosters are left unchanged, so the command is safe to repeat. The generated file is a one-time credential handoff, not an ongoing application dependency. Keep it private and remove it after delivering the logins. Restart `npm run dev` afterward.
+This creates an empty private planner and refuses to replace an existing account. Remove `ACCOUNT_PASSWORD` from `.env` afterward. Deliver credentials privately to the intended account holder. Keep any credential handoff files outside Git and remove them after delivery. Restart `npm run dev` afterward if needed.
 
-To create a different account, set `ACCOUNT_USERNAME` and `ACCOUNT_PASSWORD` in `.env`, stop the local server, and run `npm run db:create-account`. Remove the password from `.env` afterward. This command refuses to replace an existing account. The same CLI commands work against the configured hosted PostgreSQL database; in a production image use `node app/server/dist/cli.js seed-accounts` or `create-account` from the repository root.
+The command operates on the configured database. In a production runtime, use `node app/server/dist/cli.js create-account` from the repository root with the account fields supplied through environment variables.
 
-`localhost` works on your own computer. For Bru, CT, and Peko to connect from their computers, deploy this same app and database to an accessible HTTPS host as described below. Accounts created locally are in the local database; seed the accounts against the hosted database when deploying.
+Local accounts exist only in the local database. Remote access requires deploying the application and PostgreSQL database to an accessible HTTPS host. Create accounts against the hosted database or use the database transfer procedure below to preserve an existing installation.
 
 ## PostgreSQL and production
 
@@ -100,21 +100,21 @@ In production, set:
 
 - `NODE_ENV=production`
 - `DATABASE_MODE=postgres`
-- `DATABASE_URL` to your PostgreSQL connection string; configure TLS according to your database provider's instructions, without disabling certificate verification.
-- Production database connections automatically use verified TLS. If your provider uses a separate CA bundle, set `DATABASE_SSL_CA_FILE` to its path. Heroku buildpacks include their CA store at `/usr/lib/ssl/certs/ca-certificates.crt`. For external Heroku connections, download the [official AWS RDS bundle](https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem) and use its local path. Insecure `no-verify` and production `sslmode=disable` settings are rejected.
+- `DATABASE_URL` to the PostgreSQL connection string; configure TLS according to the database provider's instructions, without disabling certificate verification.
+- Production database connections automatically use verified TLS. If the provider uses a separate CA bundle, set `DATABASE_SSL_CA_FILE` to its path. Heroku buildpacks include their CA store at `/usr/lib/ssl/certs/ca-certificates.crt`. For external Heroku connections, download the [official AWS RDS bundle](https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem) and use its local path. Insecure `no-verify` and production `sslmode=disable` settings are rejected.
 - `APP_ORIGIN` to the exact HTTPS origin, without a trailing slash, e.g. `https://roster.example.com`.
 - `PORT` to the HTTP port, default `5000`.
-- `TRUST_PROXY=true` **only** if there is exactly one trusted reverse proxy in front of the application. Otherwise leave it false. HTTPS termination belongs at that proxy or your hosting platform.
+- `TRUST_PROXY=true` **only** if there is exactly one trusted reverse proxy in front of the application. Otherwise leave it false. HTTPS termination belongs at that proxy or the hosting platform.
 
-Express serves the Vite build and API from the same origin. Host on a Node-capable service or build the included Dockerfile. No Vercel-specific services are required. The container runs as a non-root user. Docker and hosted PostgreSQL deployment are configured here but must be verified in your target hosting environment.
+Express serves the Vite build and API from the same origin. Host on a Node-capable service or build the included Dockerfile. The container runs as a non-root user. Verify deployment in the target hosting environment.
 
-### Heroku / slashpullfive.com
+### Heroku deployment
 
 The root `Procfile` starts the compiled server and applies migrations during Heroku's release phase. The Node buildpack runs the root build script before pruning development dependencies. Deploy the full repository root, including all three npm workspaces. The server reads Heroku's assigned `PORT`; do not pin it in production. Migrations use a transaction advisory lock so release and startup checks cannot apply a migration concurrently.
 
-The production configuration is `NODE_ENV=production`, `DATABASE_MODE=postgres`, `APP_ORIGIN=https://slashpullfive.com`, `TRUST_PROXY=true`, and `DATABASE_SSL_CA_FILE=/usr/lib/ssl/certs/ca-certificates.crt`. Heroku supplies `DATABASE_URL`. Requests to alternate hosts or HTTP redirect to the canonical HTTPS origin, preserving their path. `/api/health` remains available for health checks. Use one Basic web dyno and the Essential-0 Postgres plan initially.
+Use the production environment settings above. Heroku supplies `DATABASE_URL`; set `APP_ORIGIN` to the deployment's canonical HTTPS origin. Requests to alternate hosts or HTTP redirect to that origin, preserving their path. `/api/health` remains available for health checks.
 
-Both `slashpullfive.com` and `www.slashpullfive.com` should be registered under the app's custom domains, with automatic certificates enabled. DreamHost uses an ALIAS record for the root and CNAME for `www`; each should target the value shown by `heroku domains --app slash-pull-five`. Keep email-related DNS records. [Heroku domain setup](https://devcenter.heroku.com/articles/custom-domains).
+Register any custom domains with the application and enable automatic certificates. Configure DNS using the targets reported by `heroku domains --app <app-name>` and the DNS provider's supported record types. Preserve unrelated DNS records. [Heroku domain setup](https://devcenter.heroku.com/articles/custom-domains).
 
 ### Moving the local database to production
 
@@ -122,7 +122,7 @@ Both `slashpullfive.com` and `www.slashpullfive.com` should be registered under 
 
 To restore, configure the destination PostgreSQL connection and verified TLS, set `DB_IMPORT_FILE` to that file's absolute path, and run `npm run db:restore` (or `node app/server/dist/cli.js restore-database` in a production runtime). Source and destination must use the same migrations. The destination must contain no application data or sessions. Restore refuses to overwrite an existing installation, inserts in a single transaction, and verifies every transferred table before committing. An invalid row or failed verification rolls back the whole transfer. Keep the transfer file private and outside Git.
 
-After a successful deployment, verify `/api/health`, all four logins, private roster access, and read-only sharing. Schedule database backups and retain the pre-deployment release/configuration for rollback. A code rollback cannot reverse a database migration; check migration compatibility before rolling back to an older application.
+After a successful deployment, verify `/api/health`, account sign-in, private roster access, and read-only sharing. Schedule database backups and retain the pre-deployment release/configuration privately for rollback. A code rollback cannot reverse a database migration; check migration compatibility before rolling back to an older application.
 
 Authentication uses database-backed, expiring sessions with HttpOnly cookies, Secure cookies in production, SameSite=Strict, exact-origin write checks, and session CSRF tokens. Inputs are validated server-side, account ownership is rechecked inside write transactions, and database constraints protect cross-workspace relationships. Login is rate-limited. Passwords are hashed with salted scrypt. Session tokens and password hashes are not returned in planner data or logged.
 
@@ -173,4 +173,4 @@ app/shared/src/           Buff catalog, spec presets, coverage, validation, CSV
 e2e/                     Browser acceptance tests
 ```
 
-Requires Node 24. One root npm lockfile and one install command. Vite remains the client build tool; Express serves the API and built client from one origin. No framework migration is needed for this scope.
+Requires Node 24. One root npm lockfile and one install command. Vite builds the client; Express serves the API and built client from one origin.
