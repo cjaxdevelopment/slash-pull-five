@@ -1,6 +1,7 @@
 .git
 **/node_modules
 **/dist
+**/build
 .local
 test-results
 playwright-report

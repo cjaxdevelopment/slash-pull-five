@@ -23,7 +23,6 @@
     "db:seed-accounts": "npm run build -w @spf/shared && npm run db:seed-accounts -w @spf/server",
     "db:export": "npm run build -w @spf/shared && npm run db:export -w @spf/server",
     "db:restore": "npm run build -w @spf/shared && npm run db:restore -w @spf/server",
-    "legacy:export": "npm run build -w @spf/shared && npm run legacy:export -w @spf/server",
     "check": "npm run format:check && npm run typecheck && npm test && npm run build",
     "test:e2e": "npm run build -w @spf/shared && playwright test",
     "db:reset-password": "npm run build -w @spf/shared && npm run db:reset-password -w @spf/server",

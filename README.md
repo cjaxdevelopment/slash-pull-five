@@ -146,7 +146,7 @@ The new `002_composition_planner.sql` migration preserves existing accounts, cha
 
 `005_private_planners.sql` retires shared-edit invitations and officer access. Existing owners keep their characters, saved raids, logins, and passwords. Former collaborators receive their own empty private planner, retaining their username/password and the prior region/faction/ruleset. Existing shared rosters stay with their original owner. Old invitation links no longer grant access. Read-only share links continue to work.
 
-The original MongoDB runtime is retired. Its optional read-only exporter is still available via `npm run legacy:export` with `LEGACY_MONGODB_URI` and `LEGACY_USER_ID`. It creates a review JSON and character CSV under `.local/legacy-roster`, refuses to overwrite files, and excludes authentication data. Retail-only classes stay in the review JSON. Review character names, roles, and Forever buff selections before importing; saved Retail teams are not converted automatically.
+The original Retail/MongoDB application and its one-time exporter are retired. This application uses PostgreSQL only. Old `MONGODB_URI`, `JWT_SECRET`, and `REACT_APP_API_URL` settings are unused and should be removed from the hosting configuration. Keep applied SQL migrations: their checksums are verified on startup and they preserve existing accounts and rosters.
 
 Character exchange API endpoints are scoped to the signed-in account's planner: `GET /api/guilds/:id/export.csv`, `POST /api/guilds/:id/import` with `{ "csv": "..." }`, and `GET /api/guilds/:id/backup`. Writes require the normal origin and CSRF headers. JSON export is available as **Export data** in the raid menu.
 
