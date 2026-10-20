@@ -1,0 +1,41 @@
+{
+  "name": "slash-pull-five",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "app/client",
+    "app/server",
+    "app/shared"
+  ],
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "dev": "npm run build -w @spf/shared && concurrently -k -n api,web -c yellow,cyan \"npm run dev -w @spf/server\" \"npm run dev -w @spf/client\"",
+    "build": "npm run build -w @spf/shared && npm run build -w @spf/server && npm run build -w @spf/client",
+    "typecheck": "npm run build -w @spf/shared && npm run typecheck --workspaces --if-present && tsc --project tsconfig.tests.json",
+    "test": "npm run build -w @spf/shared && vitest run",
+    "start": "npm run start -w @spf/server",
+    "db:migrate": "npm run build -w @spf/shared && npm run db:migrate -w @spf/server",
+    "db:bootstrap": "npm run build -w @spf/shared && npm run db:bootstrap -w @spf/server",
+    "db:create-account": "npm run build -w @spf/shared && npm run db:create-account -w @spf/server",
+    "db:seed-accounts": "npm run build -w @spf/shared && npm run db:seed-accounts -w @spf/server",
+    "db:export": "npm run build -w @spf/shared && npm run db:export -w @spf/server",
+    "db:restore": "npm run build -w @spf/shared && npm run db:restore -w @spf/server",
+    "legacy:export": "npm run build -w @spf/shared && npm run legacy:export -w @spf/server",
+    "check": "npm run format:check && npm run typecheck && npm test && npm run build",
+    "test:e2e": "npm run build -w @spf/shared && playwright test",
+    "db:reset-password": "npm run build -w @spf/shared && npm run db:reset-password -w @spf/server",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.0.0",
+    "concurrently": "^9.2.0",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.0",
+    "vitest": "^4.0.0"
+  }
+}

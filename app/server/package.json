@@ -1,21 +1,38 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "@spf/server",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "heroku-postbuild": "cd ../../client && npm install && npm run build && cp -a build/. ../server/public/"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js",
+    "db:migrate": "tsx src/cli.ts migrate",
+    "db:bootstrap": "tsx src/cli.ts bootstrap",
+    "db:create-account": "tsx src/cli.ts create-account",
+    "db:seed-accounts": "tsx src/cli.ts seed-accounts",
+    "db:export": "tsx src/cli.ts export-database",
+    "db:restore": "tsx src/cli.ts restore-database",
+    "legacy:export": "tsx src/legacy-export.ts",
+    "db:reset-password": "tsx src/cli.ts reset-password"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.4.4"
+    "@spf/shared": "*",
+    "@electric-sql/pglite": "^0.5.10",
+    "dotenv": "^17.0.0",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.0.0",
+    "helmet": "^8.0.0",
+    "pg": "^8.16.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/supertest": "^6.0.0",
+    "supertest": "^7.0.0",
+    "tsx": "^4.20.0",
+    "mongodb": "^6.0.0"
   }
 }
