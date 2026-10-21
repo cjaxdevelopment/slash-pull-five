@@ -6,7 +6,6 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import { BrowserRouter } from 'react-router-dom';
 import { api } from './api';
 import App from './App';
-import { ThemeProvider } from './theme';
 import './styles.css';
 const store = configureStore({
   reducer: { [api.reducerPath]: api.reducer },
@@ -17,9 +16,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <ThemeProvider>
-          <App />
-        </ThemeProvider>
+        <App />
       </BrowserRouter>
     </Provider>
   </React.StrictMode>,

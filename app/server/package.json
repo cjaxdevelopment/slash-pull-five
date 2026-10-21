@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit",
     "start": "node dist/server.js",
     "db:migrate": "tsx src/cli.ts migrate",
+    "profs:sync": "tsx src/cli.ts profs-sync",
+    "profs:seed": "tsx src/cli.ts profs-seed",
     "db:bootstrap": "tsx src/cli.ts bootstrap",
     "db:create-account": "tsx src/cli.ts create-account",
     "db:seed-accounts": "tsx src/cli.ts seed-accounts",

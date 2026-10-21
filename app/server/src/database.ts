@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { postgresOptions } from './postgres.js';
+import { acquireLocalDatabaseLock } from './local-lock.js';
 
 export interface Executor {
   query<T = Record<string, unknown>>(
@@ -39,7 +40,25 @@ export async function openDatabase(): Promise<Database> {
       ? resolve(root, process.env.DATABASE_DIRECTORY)
       : resolve(root, '.local/postgres');
     await mkdir(directory, { recursive: true });
-    return embeddedDatabase(new PGlite(directory));
+    const release = await acquireLocalDatabaseLock(directory);
+    try {
+      const engine = new PGlite(directory);
+      await engine.waitReady;
+      const database = embeddedDatabase(engine);
+      return {
+        ...database,
+        close: async () => {
+          try {
+            await database.close();
+          } finally {
+            await release();
+          }
+        },
+      };
+    } catch (error) {
+      await release();
+      throw error;
+    }
   }
   const pool = new Pool(await postgresOptions());
   const wrap = (client: Pick<Pool, 'query'>): Executor => ({

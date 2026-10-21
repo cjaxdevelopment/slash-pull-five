@@ -3,10 +3,13 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.js';
 import { openDatabase, migrate } from './database.js';
+import { ProfessionService } from './professions.js';
 
 const db = await openDatabase();
 await migrate(db);
-const app = createApp(db);
+const professions = new ProfessionService(db);
+const app = createApp(db, { professions });
+const stopProfessions = professions.start();
 if (config.production) {
   const client = fileURLToPath(new URL('../../client/dist/', import.meta.url));
   app.use(express.static(client, { index: false }));
@@ -20,10 +23,12 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const)
   process.on(signal, () => {
     if (closing) return;
     closing = true;
+    const professionsStopped = stopProfessions();
     const timeout = setTimeout(() => process.exit(1), 10000);
     timeout.unref();
     server.close(() => {
-      db.close()
+      professionsStopped
+        .then(() => db.close())
         .then(() => process.exit(0))
         .catch(() => process.exit(1));
     });

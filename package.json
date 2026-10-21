@@ -18,6 +18,8 @@
     "test": "npm run build -w @spf/shared && vitest run",
     "start": "npm run start -w @spf/server",
     "db:migrate": "npm run build -w @spf/shared && npm run db:migrate -w @spf/server",
+    "profs:sync": "npm run build -w @spf/shared && npm run profs:sync -w @spf/server",
+    "profs:seed": "npm run build -w @spf/shared && npm run profs:seed -w @spf/server",
     "db:bootstrap": "npm run build -w @spf/shared && npm run db:bootstrap -w @spf/server",
     "db:create-account": "npm run build -w @spf/shared && npm run db:create-account -w @spf/server",
     "db:seed-accounts": "npm run build -w @spf/shared && npm run db:seed-accounts -w @spf/server",

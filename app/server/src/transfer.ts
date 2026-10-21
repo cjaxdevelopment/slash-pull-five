@@ -11,6 +11,13 @@ const tables = [
   'plans',
   'assignments',
   'activity',
+  'profs_scopes',
+  'profs_characters',
+  'profs_recipes',
+  'profs_known_recipes',
+  'profs_claims',
+  'profs_members',
+  'profs_jobs',
 ] as const;
 type Table = (typeof tables)[number];
 type Row = Record<string, unknown>;

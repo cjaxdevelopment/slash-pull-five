@@ -3,8 +3,12 @@ test('private accounts plan and share raid compositions', async ({ page, browser
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.emulateMedia({ colorScheme: 'light' });
+  await page.addInitScript(() => localStorage.setItem('spf.theme', 'light'));
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'TEST FIXTURES Professions' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Main navigation' })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Officer sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Officer sign in', exact: true })).toBeVisible();
   await expect(page.locator('.signin-brand')).toContainText('Rewound');
   await expect(page).toHaveTitle(/Rewound/);
   await expect(page.getByLabel('Username', { exact: true })).toHaveAttribute(
@@ -16,19 +20,15 @@ test('private accounts plan and share raid compositions', async ({ page, browser
     'current-password',
   );
   await page.screenshot({ path: '.local/qa-signin-desktop.png', fullPage: true });
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.getByRole('button', { name: 'Dark mode', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Dark mode', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.getByRole('button', { name: 'Dark mode', exact: true })).toHaveCount(0);
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(16, 21, 30)');
   await page.screenshot({ path: '.local/qa-signin-dark.png', fullPage: true });
   await page.getByLabel('Username', { exact: true }).fill('testlead');
   await page.getByLabel('Password', { exact: true }).fill('e2e-only-test-password');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Officer sign in', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Raid composition', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Roster', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'New composition', exact: true }).click();
@@ -143,10 +143,7 @@ test('private accounts plan and share raid compositions', async ({ page, browser
     .dragTo(page.getByRole('region', { name: 'Bench', exact: true }));
   await expect(page.getByLabel('Move Claw', { exact: true })).toHaveValue('bench');
   await page.screenshot({ path: '.local/qa-rewound-dark.png', fullPage: true });
-  await page.getByRole('button', { name: 'Dark mode', exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.screenshot({ path: '.local/qa-rewound-light.png', fullPage: true });
-  await page.getByRole('button', { name: 'Dark mode', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Dark mode', exact: true })).toHaveCount(0);
   await page.getByLabel('Saved composition').selectOption(original);
   await expect(page.getByLabel('Move Claw', { exact: true })).toHaveValue('2');
   await expect(page.getByLabel('Move Grace', { exact: true })).toHaveValue('bench');
@@ -163,10 +160,10 @@ test('private accounts plan and share raid compositions', async ({ page, browser
     const context = await browser.newContext();
     const friend = await context.newPage();
     friend.on('pageerror', (e) => errors.push(e.message));
-    await friend.goto('/');
+    await friend.goto('/planner');
     await friend.getByLabel('Username', { exact: true }).fill(username.toUpperCase());
     await friend.getByLabel('Password', { exact: true }).fill('e2e-private-password');
-    await friend.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await friend.getByRole('button', { name: 'Officer sign in', exact: true }).click();
     await expect(friend.getByText('No raids yet', { exact: true })).toBeVisible();
     await expect(friend.getByRole('link', { name: 'Officers', exact: true })).toHaveCount(0);
     await friend.getByRole('button', { name: 'New composition', exact: true }).click();
@@ -226,10 +223,7 @@ test('private accounts plan and share raid compositions', async ({ page, browser
   await page.screenshot({ path: '.local/qa-cards-tablet.png', fullPage: true });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.screenshot({ path: '.local/qa-rewound-dark.png', fullPage: true });
-  await page.getByRole('button', { name: 'Dark mode', exact: true }).click();
-  await page.screenshot({ path: '.local/qa-rewound-light.png', fullPage: true });
   // Build straight from the spec palette, then swap exact positions.
-  await page.getByRole('button', { name: 'Dark mode', exact: true }).click();
   await page.getByRole('button', { name: 'New composition', exact: true }).click();
   await page.getByLabel('Composition name').fill('Planner tools');
   await page.getByLabel('Raid size').selectOption('10');

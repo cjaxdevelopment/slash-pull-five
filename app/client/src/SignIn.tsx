@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { errorMessage, useLoginMutation } from './api';
 import { ErrorBox, Field } from './ui';
-import { ThemeToggle } from './theme';
 
 export default function SignIn() {
   const [login, state] = useLoginMutation();
@@ -24,14 +24,11 @@ export default function SignIn() {
 
   return (
     <main className="signin-page">
-      <div className="auth-theme-toggle">
-        <ThemeToggle />
-      </div>
       <section className="signin-card" aria-labelledby="signin-title">
         <div className="signin-brand">
           Rewound <span>Raid planner</span>
         </div>
-        <h1 id="signin-title">Sign in</h1>
+        <h1 id="signin-title">Officer sign in</h1>
         <form onSubmit={submit} aria-busy={state.isLoading}>
           <Field label="Username">
             <input
@@ -71,10 +68,13 @@ export default function SignIn() {
           </div>
           {error && <ErrorBox message={error} />}
           <button className="button primary full" disabled={state.isLoading}>
-            {state.isLoading ? 'Signing in...' : 'Sign in'}
+            {state.isLoading ? 'Signing in...' : 'Officer sign in'}
           </button>
         </form>
-        <p className="signin-help">Ask your raid leader for account help.</p>
+        <p className="signin-help">Officer access only. Ask Eizzo for account help.</p>
+        <p className="signin-help">
+          <Link to="/">Back to professions</Link>
+        </p>
       </section>
     </main>
   );

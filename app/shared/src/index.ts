@@ -1,4 +1,13 @@
 import { z } from 'zod';
+export type {
+  ProfessionTier,
+  ProfessionSnapshot,
+  DirectoryCharacter,
+  DirectoryRecipe,
+  ProfessionDirectory,
+  RecipeCoverage,
+  RecipeMaterials,
+} from './professions.js';
 import { buffs, specs, specFor, loadoutIssues } from './buffs.js';
 export {
   buffs,

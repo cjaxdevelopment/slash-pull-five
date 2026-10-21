@@ -1,5 +1,12 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { Session, Snapshot } from '@spf/shared';
+import type {
+  Session,
+  Snapshot,
+  ProfessionDirectory,
+  ProfessionSnapshot,
+  RecipeCoverage,
+  RecipeMaterials,
+} from '@spf/shared';
 let csrfToken: string | undefined;
 export const api = createApi({
   reducerPath: 'api',
@@ -11,8 +18,44 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Session', 'Workspace'],
+  tagTypes: ['Session', 'Workspace', 'Professions'],
   endpoints: (build) => ({
+    professions: build.query<
+      ProfessionDirectory,
+      { q: string; profession: string; expansion: string; character: string; page: number }
+    >({
+      query: (filters) => ({ url: '/profs', params: filters }),
+      providesTags: ['Professions'],
+    }),
+    professionCharacter: build.query<{ snapshot: ProfessionSnapshot | null }, string>({
+      query: (id) => `/profs/characters/${id}`,
+      providesTags: ['Professions'],
+    }),
+    recipeMaterials: build.query<RecipeMaterials, number>({
+      query: (id) => `/profs/recipes/${id}/materials`,
+      providesTags: ['Professions'],
+    }),
+    recipeProviders: build.query<{ characterIds: string[] }, number>({
+      query: (id) => `/profs/recipes/${id}/providers`,
+      providesTags: ['Professions'],
+    }),
+    recipeCoverage: build.query<
+      RecipeCoverage,
+      { id: number; profession: string; expansion: string }
+    >({
+      query: ({ id, ...params }) => ({ url: `/profs/recipes/${id}/coverage`, params }),
+      providesTags: ['Professions'],
+    }),
+    professionCommand: build.mutation<
+      { ok: boolean },
+      { path: string; method?: 'POST' | 'PUT'; body?: unknown }
+    >({
+      query: ({ path, method = 'POST', body }) => ({ url: `/profs/${path}`, method, body }),
+      invalidatesTags: ['Professions'],
+    }),
+    prioritizeRecipeDetails: build.mutation<{ ok: boolean }, number[]>({
+      query: (recipeIds) => ({ url: '/profs/recipe-details', method: 'POST', body: { recipeIds } }),
+    }),
     session: build.query<Session, void>({
       query: () => '/session',
       transformResponse: (s: Session) => {
@@ -23,7 +66,7 @@ export const api = createApi({
     }),
     login: build.mutation<{ ok: boolean }, { username: string; password: string }>({
       query: (body) => ({ url: '/login', method: 'POST', body }),
-      invalidatesTags: ['Session', 'Workspace'],
+      invalidatesTags: ['Session', 'Workspace', 'Professions'],
     }),
     logout: build.mutation<{ ok: boolean }, void>({
       query: () => ({ url: '/logout', method: 'POST' }),
@@ -47,6 +90,13 @@ export const api = createApi({
   }),
 });
 export const {
+  useProfessionsQuery,
+  useProfessionCharacterQuery,
+  useRecipeCoverageQuery,
+  useRecipeProvidersQuery,
+  useRecipeMaterialsQuery,
+  useProfessionCommandMutation,
+  usePrioritizeRecipeDetailsMutation,
   useSessionQuery,
   useLoginMutation,
   useLogoutMutation,

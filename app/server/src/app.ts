@@ -17,6 +17,7 @@ import {
   type Plan,
 } from '@spf/shared';
 import { config } from './config.js';
+import { ProfessionService, professionsRouter } from './professions.js';
 import type { Database, Executor } from './database.js';
 import {
   hashPassword,
@@ -42,11 +43,31 @@ interface GuildRequest extends AuthRequest {
   workspace?: Workspace;
 }
 const param = (req: Request, name: string) => idSchema.parse(req.params[name]);
-export function createApp(db: Database, options: { rateLimit?: boolean } = {}) {
+export function createApp(
+  db: Database,
+  options: { rateLimit?: boolean; professions?: ProfessionService } = {},
+) {
   const app = express();
   app.disable('x-powered-by');
   if (config.trustProxy) app.set('trust proxy', 1);
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          scriptSrc: ["'self'", 'https://wow.zamimg.com', 'https://*.wowhead.com'],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'https://render.worldofwarcraft.com',
+            'https://wow.zamimg.com',
+            'https://*.wowhead.com',
+          ],
+          connectSrc: ["'self'", 'https://*.wowhead.com', 'https://wow.zamimg.com'],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://wow.zamimg.com'],
+        },
+      },
+    }),
+  );
   if (config.production)
     app.use((req, res, next) => {
       if (
@@ -130,6 +151,13 @@ export function createApp(db: Database, options: { rateLimit?: boolean } = {}) {
     });
     res.json({ ok: true });
   });
+  app.use(
+    '/api/profs',
+    professionsRouter(
+      options.professions || new ProfessionService(db),
+      options.rateLimit !== false,
+    ),
+  );
   const guild = express.Router({ mergeParams: true });
   guild.use(requireAuth, async (req: GuildRequest, _res, next) => {
     const id = param(req, 'guildId');

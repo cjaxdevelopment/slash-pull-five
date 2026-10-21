@@ -8,10 +8,52 @@ import { workspaceSchema } from '@spf/shared';
 import { openDatabase, migrate } from './database.js';
 import { bootstrap, createPrivateAccount, accountCredentials, hashPassword } from './auth.js';
 import { exportDatabase, restoreDatabase } from './transfer.js';
+import { ProfessionService } from './professions.js';
 const db = await openDatabase();
 try {
   await migrate(db);
-  if (process.argv[2] === 'export-database') {
+  if (process.argv[2] === 'profs-sync' || process.argv[2] === 'profs-seed') {
+    const service = new ProfessionService(db);
+    if (!service.source.configured)
+      throw new Error(
+        'Set BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET in secure server environment configuration first.',
+      );
+    if (process.argv[2] === 'profs-sync') {
+      await service.queue('roster');
+      // CLI is an operator tool: stop the local embedded API before using it.
+      for (let n = 0; n < 100; n++) {
+        const queued = await db.query(
+          "SELECT id FROM profs_jobs WHERE scope_id=$1 AND kind='roster'",
+          [service.scope],
+        );
+        if (!queued.rows.length) break;
+        if (!(await service.workOne())) break;
+      }
+      const scope = (
+        await db.query<{ roster_error: string | null; roster_synced: string | null }>(
+          'SELECT roster_error,roster_synced FROM profs_scopes WHERE id=$1',
+          [service.scope],
+        )
+      ).rows[0];
+      if (scope.roster_error || !scope.roster_synced)
+        throw new Error(scope.roster_error || 'Roster refresh is still queued.');
+      console.log(
+        'Rewound guild identity verified and cross-realm retail roster imported. Recipe data remains unfetched until refreshed.',
+      );
+    }
+    const custom = process.argv[2] === 'profs-seed' && process.argv[3] && process.argv[4];
+    const id = custom
+      ? await service.seedValidationCharacter(
+          z.string().min(1).max(100).parse(process.argv[3]),
+          z.string().min(1).max(60).parse(process.argv[4]),
+        )
+      : await service.seedEizzo();
+    console.log(
+      'Live retail validation professions saved. Character record: ' +
+        id +
+        '. No account ownership was inferred.',
+    );
+  } else if (process.argv[2] === 'export-database') {
     const directory = new URL('../../../.local/', import.meta.url);
     await mkdir(directory, { recursive: true });
     const filename = process.env.DB_EXPORT_FILE

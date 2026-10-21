@@ -44,6 +44,29 @@ beforeAll(async () => {
     "INSERT INTO sessions(token_hash,user_id,csrf_token,expires_at) VALUES('secret-session',$1,'secret-csrf',now()+interval '1 hour')",
     [account.userId],
   );
+  await source.query(
+    "INSERT INTO profs_scopes(id,game_version,region,profile_namespace,data_namespace,guild_name,guild_realm) VALUES('retail:us','retail','us','profile-us','static-us','Fixture guild','fixture-realm')",
+  );
+  const professionCharacter = randomUUID();
+  await source.query(
+    "INSERT INTO profs_characters(id,scope_id,api_id,name,realm,snapshot) VALUES($1,'retail:us',1,'TransferFixture','fixture-realm','{\"tiers\":[]}'::jsonb)",
+    [professionCharacter],
+  );
+  await source.query(
+    'INSERT INTO profs_recipes(scope_id,api_id,name,items) VALUES(\'retail:us\',90,\'Fixture recipe\',\'[{"id":700,"name":"Fixture item"}]\'::jsonb)',
+  );
+  await source.query(
+    "INSERT INTO profs_known_recipes(character_id,scope_id,recipe_id,profession,expansion) VALUES($1,'retail:us',90,'Fixture profession','Fixture expansion')",
+    [professionCharacter],
+  );
+  await source.query(
+    "INSERT INTO profs_claims(id,scope_id,character_id,user_id,status) VALUES($1,'retail:us',$2,$3,'approved')",
+    [randomUUID(), professionCharacter, account.userId],
+  );
+  await source.query(
+    "INSERT INTO profs_members(scope_id,user_id,discord,main_character_id) VALUES('retail:us',$1,'Fixture contact',$2)",
+    [account.userId, professionCharacter],
+  );
   snapshot = await exportDatabase(source);
 });
 afterAll(async () => source.close());

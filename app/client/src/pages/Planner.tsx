@@ -18,6 +18,7 @@ import { CharacterForm, PlanForm, presetCharacter } from '../forms';
 import { Empty, ErrorBox, Field, Modal, RoleIcon, CharacterIdentity, classStyle } from '../ui';
 import BuffCoverage, { GroupBuffs } from '../BuffCoverage';
 import { raidShareLink } from '../sharing';
+import CharacterName from '../CharacterName';
 
 export default function Planner({ data }: { data: Snapshot }) {
   const { id } = useParams(),
@@ -722,8 +723,11 @@ export default function Planner({ data }: { data: Snapshot }) {
           }}
         >
           <p>
-            Delete <strong>{deleting.name}</strong> from the character pool and all saved raids?
-            This cannot be undone.
+            Delete{' '}
+            <strong>
+              <CharacterName name={deleting.name} cls={deleting.class} />
+            </strong>{' '}
+            from the character pool and all saved raids? This cannot be undone.
           </p>
           {deleteError && <ErrorBox message={deleteError} />}
           <div className="form-actions">
@@ -771,7 +775,7 @@ export default function Planner({ data }: { data: Snapshot }) {
                 const r = await run('plans/' + plan.id, 'DELETE', { revision: plan.revision });
                 if (r) {
                   setModal(null);
-                  navigate('/');
+                  navigate('/planner');
                 }
               }}
             >

@@ -2,6 +2,8 @@
 
 A private raid composition planner. Each login has its own characters and saved raids. Add **characters**, arrange groups, and check the buffs they bring. There are no player records, main/alt management, attendance, or raid scheduling in the planner.
 
+The shared **[professions directory](docs/professions.md)** is available at `/profs` behind the same sign-in. It uses retail Blizzard data, separately from the Forever raid catalog, and does not change private planners. Search learned recipes and mapped crafted items, inspect profession skill tiers, request refreshes, and link administrator-approved characters to an existing member account and Discord contact. Forever API support is unverified. See the linked setup and validation guide before importing live data.
+
 - Saved 10, 20, and 40-man compositions with 5-person groups, a bench, notes, and duplication.
 - Nine classes with class colors, draggable spec presets, role icons, names, and editable ability loadouts.
 - Raid-wide and party buff coverage, including separate spell and physical crit auras, totem elements, Paladin auras/blessings, and conflicting loadouts.
@@ -49,9 +51,9 @@ npm run db:bootstrap
 npm run dev
 ```
 
-Open **http://localhost:5173** and sign in. Remove `BOOTSTRAP_PASSWORD` from `.env` after creating the first account. Existing installations keep their accounts and saved data. Migrations run automatically when the API starts.
+Open **http://localhost:5173**. The homepage opens the public professions directory, also available at `/profs`. Signed-out visitors see an **Officer sign in** link to the private raid planner at `/planner`; the planner and professions navigation tabs appear after sign-in. The site uses dark mode only. Existing `/plans/:id` links still work. Remove `BOOTSTRAP_PASSWORD` from `.env` after creating the first account. Existing installations keep their accounts and saved data. Migrations run automatically when the API starts.
 
-Local development uses **PGlite, an embedded PostgreSQL engine**, with persistent data in `.local/postgres`. No Docker install is needed. This is a local, single-process development option; production requires network PostgreSQL. Do not run multiple local API/CLI processes against the same PGlite data directory. Stop `npm run dev` before running database CLI commands against it. `DATABASE_DIRECTORY` can select another local directory; keep it outside source control.
+Local development uses **PGlite, an embedded PostgreSQL engine**, with persistent data in `.local/postgres`. No Docker install is needed. This is a local, single-process development option; production requires network PostgreSQL. Do not run multiple local API/CLI processes against the same PGlite data directory. A process-ownership lock now rejects a second API/CLI before it can open the same files. Stop `npm run dev` before running database CLI commands against it. `DATABASE_DIRECTORY` can select another local directory; keep it outside source control.
 
 Create a raid and choose its size. The + beside **Characters** opens a small class/spec form; names are optional. Characters are created in the pool, ready to drag into groups or onto the bench. Click a character to edit its name, role, and buff loadout. Drag it back to the pool or click its X to remove it from this raid. Use the pool's + buttons and group menus for keyboard and mobile access; + uses the selected "Add to" destination. The bench does not contribute buffs.
 

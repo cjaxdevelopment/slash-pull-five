@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { X, Shield, Heart, Swords, WandSparkles } from 'lucide-react';
 import { classColors, label, type Character, type CharacterClass, type Role } from '@spf/shared';
+import CharacterName from './CharacterName';
 export const classTextColors: Record<CharacterClass, string> = {
   druid: '#b45309',
   hunter: '#3f6212',
@@ -46,7 +47,9 @@ export function CharacterIdentity({
 }) {
   return (
     <span className="character-identity">
-      <strong className="character-name">{name}</strong>
+      <strong className="character-name">
+        <CharacterName name={name} cls={cls} />
+      </strong>
       <span className="character-meta">
         <span className="character-class">
           <RoleIcon role={role} size={13} />
@@ -63,7 +66,7 @@ export function Modal({
   onClose,
   wide = false,
 }: {
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;

@@ -9,7 +9,6 @@ import {
 } from '@spf/shared';
 import BuffCoverage, { GroupBuffs } from '../BuffCoverage';
 import { ErrorBox, CharacterIdentity, classStyle } from '../ui';
-import { ThemeToggle } from '../theme';
 import { readRaidLink } from '../sharing';
 export default function SharedRaidPage() {
   const [snapshot, setSnapshot] = useState<SharedRaid>(),
@@ -51,8 +50,7 @@ export default function SharedRaidPage() {
           </Link>
           <span className="shared-label">Read-only snapshot</span>
           <div className="header-account">
-            <ThemeToggle />
-            <Link className="text-link" to="/">
+            <Link className="text-link" to="/planner">
               Open planner
             </Link>
           </div>

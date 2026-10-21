@@ -9,6 +9,7 @@ import {
   type composition,
 } from '@spf/shared';
 import { Modal, classStyle } from './ui';
+import CharacterName from './CharacterName';
 type Coverage = ReturnType<typeof composition>;
 export default function BuffCoverage({
   data,
@@ -138,7 +139,7 @@ export default function BuffCoverage({
                         key={p.characterId + p.buff.id}
                         onClick={() => edit(p.characterId)}
                       >
-                        {p.name}
+                        <CharacterName name={p.name} cls={p.class} />
                         {p.buff.scope === 'party' ? ' (G' + (p.group ?? '?') + ')' : ''}
                       </button>
                     ))}
@@ -252,7 +253,7 @@ export default function BuffCoverage({
                       key={p.characterId}
                       onClick={() => edit(p.characterId)}
                     >
-                      {p.name}
+                      <CharacterName name={p.name} cls={p.class} />
                     </button>
                   ))}
               </div>
