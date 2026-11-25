@@ -1,9 +1,46 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BlizzardClient, blizzardSettings, normalizeProfessions } from './blizzard.js';
 
 // Synthetic API contract fixtures: these are never loaded into application data.
 const settings = { ...blizzardSettings(), clientId: 'test-id', clientSecret: 'test-secret' };
 const response = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status });
+afterEach(() => vi.unstubAllEnvs());
+
+describe('Forever deployment settings', () => {
+  it('starts with inherited retail overrides and still exclusively requests Forever data', async () => {
+    vi.stubEnv('PROFS_GAME_VERSION', 'retail');
+    vi.stubEnv('PROFS_PROFILE_NAMESPACE', 'profile-us');
+    vi.stubEnv('PROFS_DATA_NAMESPACE', 'static-us');
+    vi.stubEnv('PROFS_GUILD_REALM', 'area-52');
+    vi.stubEnv('PROFS_REGION', 'us');
+    const configured = { ...blizzardSettings(), clientId: 'test-id', clientSecret: 'test-secret' };
+    expect(configured).toMatchObject({
+      gameVersion: 'forever',
+      profileNamespace: 'profile-forever-us',
+      dataNamespace: 'static-forever-us',
+      rulesetId: 2,
+    });
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(response({ access_token: 'test-token', expires_in: 3600 }))
+      .mockResolvedValueOnce(response({ id: 99, name: 'Recipe' }));
+    const client = new BlizzardClient(configured, fetcher);
+    expect(client.configured).toBe(true);
+    await client.recipe(99);
+    expect(String(fetcher.mock.calls[1][0])).toContain('namespace=static-forever-us');
+  });
+  it('derives both namespaces from the selected region despite old namespace overrides', () => {
+    vi.stubEnv('PROFS_REGION', 'eu');
+    vi.stubEnv('PROFS_PROFILE_NAMESPACE', 'profile-us');
+    vi.stubEnv('PROFS_DATA_NAMESPACE', 'static-us');
+    expect(blizzardSettings()).toMatchObject({
+      region: 'eu',
+      gameVersion: 'forever',
+      profileNamespace: 'profile-forever-eu',
+      dataNamespace: 'static-forever-eu',
+    });
+  });
+});
 describe('Blizzard adapter', () => {
   it('preserves reagent item IDs and quantities, missing data, and modified reagent slots', async () => {
     const fetcher = vi

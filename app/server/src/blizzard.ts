@@ -61,14 +61,12 @@ export function blizzardSettings(): BlizzardSettings {
       .min(15)
       .max(10080)
       .parse(process.env.PROFS_REFRESH_INTERVAL_MINUTES || 60),
-    gameVersion: z.literal('forever').parse(process.env.PROFS_GAME_VERSION || 'forever'),
+    // This application is Forever-only. Retired retail overrides may still be
+    // present on an existing host; never let them select an API or block startup.
+    gameVersion: 'forever',
     region,
-    profileNamespace: z
-      .literal(`profile-forever-${region}`)
-      .parse(process.env.PROFS_PROFILE_NAMESPACE || `profile-forever-${region}`),
-    dataNamespace: z
-      .literal(`static-forever-${region}`)
-      .parse(process.env.PROFS_DATA_NAMESPACE || `static-forever-${region}`),
+    profileNamespace: `profile-forever-${region}`,
+    dataNamespace: `static-forever-${region}`,
     guild: 'Rewound',
     rulesetId: 2,
     guildSlug: slug.parse(process.env.PROFS_GUILD_SLUG || 'rewound'),
