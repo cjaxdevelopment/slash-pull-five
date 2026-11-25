@@ -38,21 +38,18 @@ try {
       if (scope.roster_error || !scope.roster_synced)
         throw new Error(scope.roster_error || 'Roster refresh is still queued.');
       console.log(
-        'Rewound guild identity verified and cross-realm retail roster imported. Recipe data remains unfetched until refreshed.',
+        'Rewound Forever / Normal guild identity verified and roster imported. Recipe data remains unfetched until refreshed.',
       );
     }
-    const custom = process.argv[2] === 'profs-seed' && process.argv[3] && process.argv[4];
-    const id = custom
-      ? await service.seedValidationCharacter(
-          z.string().min(1).max(100).parse(process.argv[3]),
-          z.string().min(1).max(60).parse(process.argv[4]),
-        )
-      : await service.seedEizzo();
-    console.log(
-      'Live retail validation professions saved. Character record: ' +
-        id +
-        '. No account ownership was inferred.',
-    );
+    if (process.argv[2] === 'profs-seed') {
+      const slug = z.string().min(1).max(150).parse(process.argv[3]);
+      const id = await service.seedValidationCharacter(slug);
+      console.log(
+        'Live Forever professions saved. Character record: ' +
+          id +
+          '. No account ownership was inferred.',
+      );
+    }
   } else if (process.argv[2] === 'export-database') {
     const directory = new URL('../../../.local/', import.meta.url);
     await mkdir(directory, { recursive: true });

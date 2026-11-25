@@ -2,7 +2,7 @@
 
 A private raid composition planner. Each login has its own characters and saved raids. Add **characters**, arrange groups, and check the buffs they bring. There are no player records, main/alt management, attendance, or raid scheduling in the planner.
 
-The shared **[professions directory](docs/professions.md)** is available at `/profs` behind the same sign-in. It uses retail Blizzard data, separately from the Forever raid catalog, and does not change private planners. Search learned recipes and mapped crafted items, inspect profession skill tiers, request refreshes, and link administrator-approved characters to an existing member account and Discord contact. Forever API support is unverified. See the linked setup and validation guide before importing live data.
+The shared **[professions directory](docs/professions.md)** at `/profs` uses live WoW Forever data for Rewound on US / Normal. Browse learned recipes and crafted items, inspect profession skill tiers, and request refreshes. Sign in to link administrator-approved characters and Discord contacts. Forever characters use their full name and regional slug; the retail proof of concept is retired and its stored data stays isolated. Private planners are unchanged.
 
 - Saved 10, 20, and 40-man compositions with 5-person groups, a bench, notes, and duplication.
 - Nine classes with class colors, draggable spec presets, role icons, names, and editable ability loadouts.
@@ -28,7 +28,7 @@ Rules were reviewed on **2026-10-20** against Blizzard's October 15 beta notes a
 - Enemy debuffs and utility count available characters, rather than recipients or uptime. Equivalent abilities share one effect row. Sunder/Expose availability does not add their armor reduction together. Temporary totems are utility, not simultaneous maintained buffs.
 - Improved Scorch, Winter's Chill, Shadow Weaving, and Hemorrhage are personal effects in Forever and do not provide raid vulnerability coverage. Removed Classic talent improvements are not selectable raid buffs.
 
-Coverage assumes level 60, learned talents, maintained buffs, and characters in range. Presets are starting loadouts, not a talent simulator. Edit a character to select a pet or adjust talent and ability choices. The catalog tracks maintained buffs and common debuffs, interrupts, dispels, crowd control, and support cooldowns; it does not simulate exact magnitudes, stacking priorities, target immunities, cooldown rotations, or uptime. Pet support covers the listed effects rather than every pet family. Missing effects are information, not requirements for every composition. Forever is in beta: update the sourced catalog and its tests when rules change.
+Coverage assumes level 60, learned talents, maintained buffs, and characters in range. Presets are starting loadouts, not a talent simulator. Edit a character to select a pet or adjust talent and ability choices. The catalog tracks maintained buffs and common debuffs, interrupts, dispels, crowd control, and support cooldowns; it does not simulate exact magnitudes, stacking priorities, target immunities, cooldown rotations, or uptime. Pet support covers the listed effects rather than every pet family. Missing effects are information, not requirements for every composition. Forever has launched: update the sourced catalog and its tests when rules change.
 
 ## Start locally
 

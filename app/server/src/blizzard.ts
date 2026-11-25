@@ -4,9 +4,15 @@ import type { ProfessionSnapshot, ProfessionTier } from '@spf/shared';
 
 const positiveId = z.number().int().positive().safe();
 const named = z.object({ id: positiveId, name: z.string().min(1).max(300) });
-const realm = z.object({ slug: z.string().min(1).max(100) });
+const slug = z
+  .string()
+  .min(1)
+  .max(150)
+  .regex(/^[\p{L}\p{N}-]+$/u);
+const ruleset = z.object({ id: positiveId });
 const characterSchema = named.extend({
-  realm,
+  surname: z.string().min(1).max(100),
+  slug: slug.optional(),
   character_class: z.object({ id: positiveId }).optional(),
   playable_class: z.object({ id: positiveId }).optional(),
 });
@@ -39,7 +45,7 @@ export interface BlizzardSettings {
   profileNamespace: string;
   dataNamespace: string;
   guild: string;
-  guildRealm: string;
+  rulesetId: number;
   guildSlug: string;
   clientId: string;
   clientSecret: string;
@@ -47,11 +53,6 @@ export interface BlizzardSettings {
 }
 export function blizzardSettings(): BlizzardSettings {
   const region = z.enum(['us', 'eu', 'kr', 'tw']).parse(process.env.PROFS_REGION || 'us');
-  const slug = z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[\p{L}\p{N}-]+$/u);
   return {
     autoRefresh: process.env.PROFS_AUTO_REFRESH !== 'false',
     refreshIntervalMinutes: z.coerce
@@ -60,21 +61,16 @@ export function blizzardSettings(): BlizzardSettings {
       .min(15)
       .max(10080)
       .parse(process.env.PROFS_REFRESH_INTERVAL_MINUTES || 60),
-    gameVersion: z
-      .string()
-      .regex(/^[a-z0-9-]{1,40}$/)
-      .parse(process.env.PROFS_GAME_VERSION || 'retail'),
+    gameVersion: z.literal('forever').parse(process.env.PROFS_GAME_VERSION || 'forever'),
     region,
     profileNamespace: z
-      .string()
-      .regex(/^[a-z0-9-]+$/)
-      .parse(process.env.PROFS_PROFILE_NAMESPACE || `profile-${region}`),
+      .literal(`profile-forever-${region}`)
+      .parse(process.env.PROFS_PROFILE_NAMESPACE || `profile-forever-${region}`),
     dataNamespace: z
-      .string()
-      .regex(/^[a-z0-9-]+$/)
-      .parse(process.env.PROFS_DATA_NAMESPACE || `static-${region}`),
+      .literal(`static-forever-${region}`)
+      .parse(process.env.PROFS_DATA_NAMESPACE || `static-forever-${region}`),
     guild: 'Rewound',
-    guildRealm: slug.parse(process.env.PROFS_GUILD_REALM || 'area-52'),
+    rulesetId: 2,
     guildSlug: slug.parse(process.env.PROFS_GUILD_SLUG || 'rewound'),
     clientId: process.env.BLIZZARD_CLIENT_ID || '',
     clientSecret: process.env.BLIZZARD_CLIENT_SECRET || '',
@@ -123,19 +119,16 @@ export function normalizeProfessions(input: unknown, characterId: number): Profe
 export interface BlizzardSource {
   stop?(): void;
   configured: boolean;
-  character(
-    realm: string,
-    name: string,
-  ): Promise<{
+  character(slug: string): Promise<{
     id: number;
     name: string;
-    realm: string;
+    slug: string;
     classId?: number | null;
     snapshot: ProfessionSnapshot;
   }>;
   roster(): Promise<{
     guildId: number;
-    characters: { id: number; name: string; realm: string; classId?: number | null }[];
+    characters: { id: number; name: string; slug: string; classId?: number | null }[];
   }>;
   recipe(id: number): Promise<{
     id: number;
@@ -155,7 +148,9 @@ export class BlizzardClient implements BlizzardSource {
   }
   get configured() {
     return (
-      this.settings.gameVersion === 'retail' &&
+      this.settings.gameVersion === 'forever' &&
+      this.settings.profileNamespace === `profile-forever-${this.settings.region}` &&
+      this.settings.dataNamespace === `static-forever-${this.settings.region}` &&
       Boolean(this.settings.clientId && this.settings.clientSecret)
     );
   }
@@ -193,10 +188,14 @@ export class BlizzardClient implements BlizzardSource {
     }
   }
   private async accessToken() {
-    if (this.settings.gameVersion !== 'retail')
+    if (
+      this.settings.gameVersion !== 'forever' ||
+      this.settings.profileNamespace !== `profile-forever-${this.settings.region}` ||
+      this.settings.dataNamespace !== `static-forever-${this.settings.region}`
+    )
       throw new BlizzardError(
         503,
-        'Live imports are enabled only for retail until the target game’s Profile API and learned-recipe support are verified.',
+        'Live imports require Forever profile and game-data namespaces.',
       );
     if (!this.configured)
       throw new BlizzardError(503, 'Blizzard credentials must be configured on the server.');
@@ -245,13 +244,17 @@ export class BlizzardClient implements BlizzardSource {
       throw e;
     }
   }
-  async character(realmSlug: string, name: string) {
-    const path = `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}`;
-    const parsed = characterSchema.safeParse(await this.get(path, this.settings.profileNamespace));
+  async character(characterSlug: string) {
+    characterSlug = slug.parse(characterSlug).toLowerCase();
+    const path = `/profile/wow/character/${encodeURIComponent(characterSlug)}`;
+    const parsed = characterSchema
+      .extend({ ruleset })
+      .safeParse(await this.get(path, this.settings.profileNamespace));
     if (
       !parsed.success ||
-      parsed.data.realm.slug !== realmSlug ||
-      parsed.data.name.toLowerCase() !== name.toLowerCase()
+      `${parsed.data.name}-${parsed.data.surname}`.toLowerCase() !== characterSlug ||
+      (parsed.data.slug !== undefined && parsed.data.slug !== characterSlug) ||
+      parsed.data.ruleset.id !== this.settings.rulesetId
     )
       throw malformed();
     const snapshot = normalizeProfessions(
@@ -260,42 +263,46 @@ export class BlizzardClient implements BlizzardSource {
     );
     return {
       id: parsed.data.id,
-      name: parsed.data.name,
-      realm: parsed.data.realm.slug,
+      name: `${parsed.data.name} ${parsed.data.surname}`,
+      slug: characterSlug,
       classId: parsed.data.character_class?.id ?? null,
       snapshot,
     };
   }
   async roster() {
-    const path = `/data/wow/guild/${encodeURIComponent(this.settings.guildRealm)}/${encodeURIComponent(this.settings.guildSlug)}`;
+    const path = `/data/wow/guild/${encodeURIComponent(this.settings.guildSlug)}`;
     const profile = named
-      .extend({ realm })
+      .extend({ slug, ruleset, faction: z.object({ type: z.literal('HORDE') }) })
       .safeParse(await this.get(path, this.settings.profileNamespace));
     if (
       !profile.success ||
       profile.data.name.toLowerCase() !== this.settings.guild.toLowerCase() ||
-      profile.data.realm.slug !== this.settings.guildRealm
+      profile.data.slug !== this.settings.guildSlug ||
+      profile.data.ruleset.id !== this.settings.rulesetId
     )
       throw malformed();
     const roster = z
       .object({
-        guild: named.extend({ realm }),
-        members: z.array(z.object({ character: characterSchema })).max(1000),
+        guild: named.extend({ slug, faction: z.object({ type: z.literal('HORDE') }) }),
+        members: z.array(z.object({ character: characterSchema.extend({ slug }) })).max(1000),
       })
       .safeParse(await this.get(path + '/roster', this.settings.profileNamespace));
     if (
       !roster.success ||
       roster.data.guild.id !== profile.data.id ||
-      roster.data.guild.realm.slug !== this.settings.guildRealm ||
-      roster.data.guild.name.toLowerCase() !== this.settings.guild.toLowerCase()
+      roster.data.guild.slug !== this.settings.guildSlug ||
+      roster.data.guild.name.toLowerCase() !== this.settings.guild.toLowerCase() ||
+      roster.data.members.some(
+        ({ character: c }) => c.slug !== `${c.name}-${c.surname}`.toLowerCase(),
+      )
     )
       throw malformed();
     return {
       guildId: profile.data.id,
       characters: roster.data.members.map(({ character: c }) => ({
         id: c.id,
-        name: c.name,
-        realm: c.realm.slug,
+        name: `${c.name} ${c.surname}`,
+        slug: c.slug,
         classId: c.playable_class?.id ?? null,
       })),
     };

@@ -20,7 +20,7 @@ import {
   type BlizzardSource,
 } from './blizzard.js';
 
-const characterColumns = `c.id,c.name,c.realm,c.class_id AS "classId",c.in_roster AS "inRoster",c.seed,c.last_success AS "lastSuccess",c.last_attempt AS "lastAttempt",c.refresh_after AS "refreshAfter",c.error,
+const characterColumns = `c.id,c.name,c.slug,c.class_id AS "classId",c.in_roster AS "inRoster",c.seed,c.last_success AS "lastSuccess",c.last_attempt AS "lastAttempt",c.refresh_after AS "refreshAfter",c.error,
   EXISTS(SELECT 1 FROM profs_jobs j WHERE j.character_id=c.id) AS queued,
   u.username AS member,u.id AS "memberId",m.discord,main.name AS main,CASE WHEN main.id IS NULL THEN NULL ELSE main.id=c.id END AS "isMain"`;
 const characterJoins = `LEFT JOIN profs_claims cl ON cl.character_id=c.id AND cl.status='approved'
@@ -50,7 +50,7 @@ export class ProfessionService {
   async ensureScope() {
     const s = this.settings;
     await this.db.query(
-      `INSERT INTO profs_scopes(id,game_version,region,profile_namespace,data_namespace,guild_name,guild_realm) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING`,
+      `INSERT INTO profs_scopes(id,game_version,region,profile_namespace,data_namespace,guild_name,guild_slug,ruleset_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING`,
       [
         this.scope,
         s.gameVersion,
@@ -58,7 +58,8 @@ export class ProfessionService {
         s.profileNamespace,
         s.dataNamespace,
         s.guild,
-        s.guildRealm,
+        s.guildSlug,
+        s.rulesetId,
       ],
     );
     const row = (
@@ -66,14 +67,16 @@ export class ProfessionService {
         profile_namespace: string;
         data_namespace: string;
         guild_name: string;
-        guild_realm: string;
+        guild_slug: string;
+        ruleset_id: number;
       }>('SELECT * FROM profs_scopes WHERE id=$1', [this.scope])
     ).rows[0];
     if (
       row.profile_namespace !== s.profileNamespace ||
       row.data_namespace !== s.dataNamespace ||
       row.guild_name !== s.guild ||
-      row.guild_realm !== s.guildRealm
+      row.guild_slug !== s.guildSlug ||
+      row.ruleset_id !== s.rulesetId
     )
       throw new HttpError(
         409,
@@ -201,15 +204,15 @@ export class ProfessionService {
     c: {
       id: number;
       name: string;
-      realm: string;
+      slug: string;
       classId?: number | null;
       snapshot: ProfessionSnapshot;
     },
     localId: string,
   ) {
     await tx.query(
-      'UPDATE profs_characters SET name=$1,realm=$2,snapshot=$3,class_id=COALESCE($7,class_id),last_success=now(),last_attempt=now(),error=NULL WHERE id=$4 AND scope_id=$5 AND api_id=$6',
-      [c.name, c.realm, JSON.stringify(c.snapshot), localId, this.scope, c.id, c.classId ?? null],
+      'UPDATE profs_characters SET name=$1,slug=$2,snapshot=$3,class_id=COALESCE($7,class_id),last_success=now(),last_attempt=now(),error=NULL WHERE id=$4 AND scope_id=$5 AND api_id=$6',
+      [c.name, c.slug, JSON.stringify(c.snapshot), localId, this.scope, c.id, c.classId ?? null],
     );
     await tx.query('DELETE FROM profs_known_recipes WHERE character_id=$1', [localId]);
     // Batch insertion keeps a large learned-recipe list bounded to two queries.
@@ -231,21 +234,14 @@ export class ProfessionService {
       [localId, this.scope, json],
     );
   }
-  async seedEizzo() {
-    if (this.settings.gameVersion !== 'retail' || this.settings.region !== 'us')
-      throw new HttpError(400, 'Eizzo validation is scoped to retail US.');
-    return this.seedValidationCharacter('area-52', 'eizzo');
-  }
-  async seedValidationCharacter(realm: string, name: string) {
-    if (this.settings.gameVersion !== 'retail')
-      throw new HttpError(400, 'Live validation is currently enabled only for retail.');
+  async seedValidationCharacter(slug: string) {
     await this.ensureScope();
-    const c = await this.source.character(realm, name);
+    const c = await this.source.character(slug);
     return this.db.transaction(async (tx) => {
       const id = (
         await tx.query<{ id: string }>(
-          `INSERT INTO profs_characters(id,scope_id,api_id,name,realm,seed) VALUES($1,$2,$3,$4,$5,true) ON CONFLICT (scope_id,api_id) DO UPDATE SET seed=true RETURNING id`,
-          [randomUUID(), this.scope, c.id, c.name, c.realm],
+          `INSERT INTO profs_characters(id,scope_id,api_id,name,slug,seed) VALUES($1,$2,$3,$4,$5,true) ON CONFLICT (scope_id,api_id) DO UPDATE SET seed=true RETURNING id`,
+          [randomUUID(), this.scope, c.id, c.name, c.slug],
         )
       ).rows[0].id;
       await this.saveCharacter(tx, c, id);
@@ -289,8 +285,8 @@ export class ProfessionService {
             ]);
             for (const c of roster.characters)
               await tx.query(
-                `INSERT INTO profs_characters(id,scope_id,api_id,name,realm,in_roster,class_id) VALUES($1,$2,$3,$4,$5,true,$6) ON CONFLICT (scope_id,api_id) DO UPDATE SET name=EXCLUDED.name,realm=EXCLUDED.realm,in_roster=true,class_id=COALESCE(EXCLUDED.class_id,profs_characters.class_id)`,
-                [randomUUID(), this.scope, c.id, c.name, c.realm, c.classId ?? null],
+                `INSERT INTO profs_characters(id,scope_id,api_id,name,slug,in_roster,class_id) VALUES($1,$2,$3,$4,$5,true,$6) ON CONFLICT (scope_id,api_id) DO UPDATE SET name=EXCLUDED.name,slug=EXCLUDED.slug,in_roster=true,class_id=COALESCE(EXCLUDED.class_id,profs_characters.class_id)`,
+                [randomUUID(), this.scope, c.id, c.name, c.slug, c.classId ?? null],
               );
             await tx.query(
               'UPDATE profs_scopes SET guild_api_id=$1,roster_synced=now(),roster_error=NULL WHERE id=$2',
@@ -299,7 +295,7 @@ export class ProfessionService {
           });
         } else {
           const c = (
-            await this.db.query<{ api_id: string; name: string; realm: string }>(
+            await this.db.query<{ api_id: string; name: string; slug: string }>(
               'SELECT * FROM profs_characters WHERE id=$1 AND scope_id=$2',
               [job.character_id, this.scope],
             )
@@ -309,7 +305,7 @@ export class ProfessionService {
             "UPDATE profs_characters SET last_attempt=now(),refresh_after=greatest(refresh_after,now()+interval '15 minutes') WHERE id=$1",
             [job.character_id],
           );
-          const result = await this.source.character(c.realm, c.name);
+          const result = await this.source.character(c.slug);
           if (result.id !== Number(c.api_id))
             throw new BlizzardError(
               409,
@@ -440,7 +436,7 @@ export class ProfessionService {
     ).rows[0];
     const characters = (
       await this.db.query<DirectoryCharacter>(
-        `SELECT ${characterColumns},NULL AS snapshot FROM profs_characters c ${characterJoins} WHERE c.scope_id=$1 AND (c.in_roster OR c.seed) ORDER BY lower(c.name),c.realm`,
+        `SELECT ${characterColumns},NULL AS snapshot FROM profs_characters c ${characterJoins} WHERE c.scope_id=$1 AND (c.in_roster OR c.seed) ORDER BY lower(c.name),c.slug`,
         [this.scope],
       )
     ).rows;
@@ -501,7 +497,7 @@ export class ProfessionService {
       gameVersion: this.settings.gameVersion,
       region: this.settings.region,
       guild: this.settings.guild,
-      realm: this.settings.guildRealm,
+      ruleset: { id: this.settings.rulesetId, name: 'Normal' },
       configured: this.source.configured,
       admin,
       rosterSynced: scope.roster_synced,

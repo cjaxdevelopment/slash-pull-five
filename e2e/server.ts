@@ -22,16 +22,16 @@ for (const username of ['bru', 'ct', 'peko'])
 // Synthetic fixtures exist only in this isolated browser-test server/database.
 // No production module imports these or seeds character/recipe ownership.
 const fixtureCharacters = [
-  { id: 1, name: 'FixtureCrafter', realm: 'area-52', classId: 8 },
-  { id: 2, name: 'FixtureAlt', realm: 'other-realm', classId: 13 },
-  { id: 3, name: 'FixtureUnfetched', realm: 'area-52', classId: 1 },
+  { id: 1, name: 'FixtureCrafter Smith', slug: 'fixturecrafter-smith', classId: 8 },
+  { id: 2, name: 'FixtureAlt Smith', slug: 'fixturealt-smith', classId: 7 },
+  { id: 3, name: 'FixtureUnfetched Smith', slug: 'fixtureunfetched-smith', classId: 1 },
 ];
 const fixtureSource: BlizzardSource = {
   configured: true,
   roster: async () => ({ guildId: 1, characters: fixtureCharacters }),
-  character: async (realm, name) => ({
-    ...fixtureCharacters.find((c) => c.name === name)!,
-    realm,
+  character: async (slug) => ({
+    ...fixtureCharacters.find((c) => c.slug === slug)!,
+    slug,
     snapshot: {
       tiers: [
         {
@@ -59,10 +59,10 @@ const professions = new ProfessionService(
   db,
   {
     ...blizzardSettings(),
-    gameVersion: 'retail',
+    gameVersion: 'forever',
     region: 'us',
-    profileNamespace: 'profile-us',
-    dataNamespace: 'static-us',
+    profileNamespace: 'profile-forever-us',
+    dataNamespace: 'static-forever-us',
     guild: 'TEST FIXTURES',
     admins: ['testlead'],
   },

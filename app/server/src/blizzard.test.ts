@@ -120,47 +120,94 @@ describe('Blizzard adapter', () => {
     await client.recipe(99);
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(calls[0].init.body).toBe('grant_type=client_credentials');
-    expect(calls[1].url).toContain('namespace=static-us');
+    expect(calls[1].url).toContain('namespace=static-forever-us');
     expect(calls.map((c) => c.url).join()).not.toMatch(/test-secret|secret-token/);
     expect(calls[1].init.headers).toEqual({ Authorization: 'Bearer secret-token' });
   });
-  it('validates guild identity before trusting a cross-realm roster', async () => {
+  it('validates the realmless guild, Normal ruleset, Horde faction and roster identity', async () => {
+    const guild = {
+      id: 8,
+      name: 'Rewound',
+      slug: 'rewound',
+      ruleset: { id: 2 },
+      faction: { type: 'HORDE' },
+    };
+    const member = {
+      id: 1,
+      name: 'Synthetic',
+      surname: 'Smith',
+      slug: 'synthetic-smith',
+      playable_class: { id: 7 },
+    };
     const fetcher = vi
       .fn()
       .mockResolvedValueOnce(response({ access_token: 'token', expires_in: 3600 }))
-      .mockResolvedValueOnce(response({ id: 8, name: 'Rewound', realm: { slug: 'area-52' } }))
+      .mockResolvedValueOnce(response(guild))
+      .mockResolvedValueOnce(response({ guild, members: [{ character: member }] }));
+    expect(await new BlizzardClient(settings, fetcher).roster()).toEqual({
+      guildId: 8,
+      characters: [{ id: 1, name: 'Synthetic Smith', slug: 'synthetic-smith', classId: 7 }],
+    });
+    expect(String(fetcher.mock.calls[1][0])).toContain(
+      '/data/wow/guild/rewound?namespace=profile-forever-us',
+    );
+    expect(String(fetcher.mock.calls[2][0])).toContain('/data/wow/guild/rewound/roster?');
+    for (const wrong of [
+      { ...guild, name: 'Other' },
+      { ...guild, slug: 'other' },
+      { ...guild, ruleset: { id: 1 } },
+      { ...guild, faction: { type: 'ALLIANCE' } },
+    ]) {
+      const mismatch = vi
+        .fn()
+        .mockResolvedValueOnce(response({ access_token: 'token', expires_in: 3600 }))
+        .mockResolvedValueOnce(response(wrong));
+      await expect(new BlizzardClient(settings, mismatch).roster()).rejects.toThrow(
+        'unexpected data',
+      );
+      expect(mismatch).toHaveBeenCalledTimes(2);
+    }
+    for (const wrong of [
+      { guild: { ...guild, id: 9 }, members: [] },
+      { guild, members: [{ character: { ...member, slug: 'wrong-slug' } }] },
+    ]) {
+      const mismatch = vi
+        .fn()
+        .mockResolvedValueOnce(response({ access_token: 'token', expires_in: 3600 }))
+        .mockResolvedValueOnce(response(guild))
+        .mockResolvedValueOnce(response(wrong));
+      await expect(new BlizzardClient(settings, mismatch).roster()).rejects.toThrow(
+        'unexpected data',
+      );
+    }
+  });
+  it('preserves characters with the same first name and different surnames', async () => {
+    const guild = {
+      id: 8,
+      name: 'Rewound',
+      slug: 'rewound',
+      ruleset: { id: 2 },
+      faction: { type: 'HORDE' },
+    };
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(response({ access_token: 'token', expires_in: 3600 }))
+      .mockResolvedValueOnce(response(guild))
       .mockResolvedValueOnce(
         response({
-          guild: { id: 8, name: 'Rewound', realm: { slug: 'area-52' } },
+          guild,
           members: [
-            {
-              character: {
-                id: 1,
-                name: 'Synthetic',
-                realm: { slug: 'other-realm' },
-                playable_class: { id: 13 },
-              },
-            },
+            { character: { id: 1, name: 'Synthetic', surname: 'Smith', slug: 'synthetic-smith' } },
+            { character: { id: 2, name: 'Synthetic', surname: 'Jones', slug: 'synthetic-jones' } },
           ],
         }),
       );
-    expect((await new BlizzardClient(settings, fetcher).roster()).characters[0]).toMatchObject({
-      realm: 'other-realm',
-      classId: 13,
-    });
-    const mismatch = vi
-      .fn()
-      .mockResolvedValueOnce(response({ access_token: 'token', expires_in: 3600 }))
-      .mockResolvedValueOnce(
-        response({ id: 8, name: 'Different guild', realm: { slug: 'area-52' } }),
-      );
-    await expect(new BlizzardClient(settings, mismatch).roster()).rejects.toThrow(
-      'unexpected data',
-    );
-    expect(mismatch).toHaveBeenCalledTimes(2);
+    expect(
+      (await new BlizzardClient(settings, fetcher).roster()).characters.map((c) => c.name),
+    ).toEqual(['Synthetic Smith', 'Synthetic Jones']);
   });
-  it('reads class IDs from character profiles and leaves missing class data unknown', async () => {
-    for (const classId of [6, null]) {
+  it('looks up the full regional slug and preserves surname and class metadata', async () => {
+    for (const classId of [7, null]) {
       const fetcher = vi
         .fn()
         .mockResolvedValueOnce(response({ access_token: 'token', expires_in: 3600 }))
@@ -168,14 +215,64 @@ describe('Blizzard adapter', () => {
           response({
             id: 1,
             name: 'Synthetic',
-            realm: { slug: 'area-52' },
+            surname: 'Smith',
+            ruleset: { id: 2 },
             ...(classId ? { character_class: { id: classId } } : {}),
           }),
         )
         .mockResolvedValueOnce(response({ character: { id: 1 }, primaries: [] }));
       expect(
-        (await new BlizzardClient(settings, fetcher).character('area-52', 'synthetic')).classId,
-      ).toBe(classId);
+        await new BlizzardClient(settings, fetcher).character('synthetic-smith'),
+      ).toMatchObject({
+        name: 'Synthetic Smith',
+        slug: 'synthetic-smith',
+        classId,
+      });
+      expect(String(fetcher.mock.calls[1][0])).toContain(
+        '/profile/wow/character/synthetic-smith?namespace=profile-forever-us',
+      );
+      expect(String(fetcher.mock.calls[2][0])).toContain(
+        '/profile/wow/character/synthetic-smith/professions?',
+      );
+    }
+  });
+  it('rejects another surname, wrong ruleset, missing identity, and mismatched profession character IDs', async () => {
+    const character = { id: 1, name: 'Synthetic', surname: 'Smith', ruleset: { id: 2 } };
+    for (const wrong of [
+      { ...character, surname: 'Other' },
+      { ...character, ruleset: { id: 1 } },
+      { ...character, slug: 'synthetic-other' },
+      { id: 1, name: 'Synthetic' },
+    ]) {
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce(response({ access_token: 'token', expires_in: 3600 }))
+        .mockResolvedValueOnce(response(wrong));
+      await expect(
+        new BlizzardClient(settings, fetcher).character('synthetic-smith'),
+      ).rejects.toThrow('unexpected data');
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    }
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(response({ access_token: 'token', expires_in: 3600 }))
+      .mockResolvedValueOnce(response(character))
+      .mockResolvedValueOnce(response({ character: { id: 2 }, primaries: [] }));
+    await expect(
+      new BlizzardClient(settings, fetcher).character('synthetic-smith'),
+    ).rejects.toThrow('unexpected data');
+  });
+  it('never falls back to retail or sends requests with mixed namespaces', async () => {
+    for (const wrong of [
+      { ...settings, gameVersion: 'retail' },
+      { ...settings, profileNamespace: 'profile-us' },
+      { ...settings, dataNamespace: 'static-us' },
+    ]) {
+      const fetcher = vi.fn();
+      const client = new BlizzardClient(wrong, fetcher);
+      expect(client.configured).toBe(false);
+      await expect(client.recipe(1)).rejects.toThrow('Forever');
+      expect(fetcher).not.toHaveBeenCalled();
     }
   });
   it('renews once after 401 and returns safe errors without upstream bodies or credentials', async () => {

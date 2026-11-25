@@ -13,9 +13,9 @@ const db = embeddedDatabase(new PGlite());
 const origin = 'http://localhost:5173';
 const password = 'professions-test-password';
 const characters = [
-  { id: 1, name: 'Fixtureone', realm: 'area-52', classId: 8 },
-  { id: 2, name: 'Fixturetwo', realm: 'another-realm', classId: 13 },
-  { id: 3, name: 'Unfetchedfixture', realm: 'area-52' },
+  { id: 1, name: 'Fixtureone', slug: 'fixtureone-smith', classId: 8 },
+  { id: 2, name: 'Fixturetwo', slug: 'fixturetwo-smith', classId: 13 },
+  { id: 3, name: 'Unfetchedfixture', slug: 'unfetchedfixture-smith' },
 ];
 const snapshot = {
   tiers: [
@@ -44,9 +44,9 @@ const snapshot = {
 const source: BlizzardSource = {
   configured: true,
   roster: vi.fn(async () => ({ guildId: 8, characters })),
-  character: vi.fn(async (realm, name) => ({
-    ...characters.find((c) => c.name.toLowerCase() === name.toLowerCase())!,
-    realm,
+  character: vi.fn(async (slug) => ({
+    ...characters.find((c) => c.slug === slug)!,
+    slug,
     snapshot,
   })),
   recipe: vi.fn(async (id) => ({
@@ -171,13 +171,13 @@ describe('shared professions directory', () => {
   it('bounds automatic jobs, reserves manual capacity and processes manual refreshes first', async () => {
     for (let n = 4; n <= 113; n++)
       await db.query(
-        `INSERT INTO profs_characters(id,scope_id,api_id,name,realm,in_roster) VALUES($1,$2,$3,$4,'fixture-realm',true)`,
+        `INSERT INTO profs_characters(id,scope_id,api_id,name,slug,in_roster) VALUES($1,$2,$3,$4,$4,true)`,
         [randomUUID(), service.scope, n, 'AutoFixture' + n],
       );
     for (let n = 0; n < 5; n++) await service.scheduleDue();
     expect((await db.query('SELECT id FROM profs_jobs')).rows).toHaveLength(90);
     const manual = (
-      await db.query<{ id: string; api_id: string; name: string; realm: string }>(
+      await db.query<{ id: string; api_id: string; name: string; slug: string }>(
         'SELECT * FROM profs_characters c WHERE NOT EXISTS(SELECT 1 FROM profs_jobs j WHERE j.character_id=c.id) LIMIT 1',
       )
     ).rows[0];
@@ -185,11 +185,11 @@ describe('shared professions directory', () => {
     vi.mocked(source.character).mockResolvedValueOnce({
       id: Number(manual.api_id),
       name: manual.name,
-      realm: manual.realm,
+      slug: manual.slug,
       snapshot,
     });
     await service.workOne();
-    expect(source.character).toHaveBeenLastCalledWith(manual.realm, manual.name);
+    expect(source.character).toHaveBeenLastCalledWith(manual.slug);
     expect(
       (await db.query('SELECT last_success FROM profs_characters WHERE id=$1', [manual.id]))
         .rows[0],
@@ -231,7 +231,7 @@ describe('shared professions directory', () => {
     expect(csp).toContain('https://wow.zamimg.com');
     expect(csp).not.toContain("'unsafe-eval'");
   });
-  it('imports cross-realm members with unknown coverage and protects routes, CSRF and administrator actions', async () => {
+  it('imports realmless members with unknown coverage and protects routes, CSRF and administrator actions', async () => {
     await request(app).get('/api/profs').expect(200);
     await request(createApp(db, { professions: service }))
       .head('/api/profs')
@@ -241,7 +241,7 @@ describe('shared professions directory', () => {
     const data = (await member.get('/api/profs').expect(200)).body;
     expect(data.admin).toBe(false); // Owning a private planner is not guild administration.
     expect(data.characters[1]).toMatchObject({
-      realm: 'another-realm',
+      slug: 'fixturetwo-smith',
       lastSuccess: null,
       snapshot: null,
       member: null,
@@ -258,7 +258,7 @@ describe('shared professions directory', () => {
     vi.mocked(source.character).mockResolvedValueOnce({
       id: 1,
       name: characters[0].name,
-      realm: 'area-52',
+      slug: characters[0].slug,
       snapshot,
     });
     await service.queue('character', ids[0]);
@@ -266,7 +266,7 @@ describe('shared professions directory', () => {
     await db.query('UPDATE profs_scopes SET roster_refresh_after=NULL');
     vi.mocked(source.roster).mockResolvedValueOnce({
       guildId: 8,
-      characters: characters.map(({ id, name, realm }) => ({ id, name, realm })),
+      characters: characters.map(({ id, name, slug }) => ({ id, name, slug })),
     });
     await service.queue('roster');
     await service.workOne();
@@ -338,7 +338,7 @@ describe('shared professions directory', () => {
     const cached = await request(app).get('/api/profs/recipes/90/materials').expect(200);
     expect(cached.body).toMatchObject({
       ready: true,
-      gameVersion: 'retail',
+      gameVersion: 'forever',
       reagents: [{ id: 765, name: 'Test ingredient', quantity: 2 }],
     });
     expect(service.requestedRecipes.has(90)).toBe(false);
@@ -463,17 +463,45 @@ describe('shared professions directory', () => {
     });
   });
   it('isolates game scopes and refuses namespace changes within an existing scope', async () => {
-    const future = new ProfessionService(
+    const legacy = new ProfessionService(
       db,
-      { ...settings, gameVersion: 'forever', profileNamespace: 'profile-unverified-us' },
+      {
+        ...settings,
+        gameVersion: 'retail',
+        profileNamespace: 'profile-us',
+        dataNamespace: 'static-us',
+      },
       source,
     );
-    expect((await future.directory(memberId, false, {})).characters).toEqual([]);
+    expect((await legacy.directory(memberId, false, {})).characters).toEqual([]);
+    const legacyId = randomUUID();
+    await db.query(
+      "INSERT INTO profs_characters(id,scope_id,api_id,name,realm,in_roster) VALUES($1,$2,1,'Retail fixture','area-52',true)",
+      [legacyId, legacy.scope],
+    );
+    await db.query(
+      "INSERT INTO profs_recipes(scope_id,api_id,name) VALUES($1,90,'Retail recipe')",
+      [legacy.scope],
+    );
+    await db.query(
+      "INSERT INTO profs_known_recipes(character_id,scope_id,recipe_id,profession,expansion) VALUES($1,$2,90,'Retail profession','Retail tier')",
+      [legacyId, legacy.scope],
+    );
+    const directory = await service.directory(memberId, false, {});
+    expect(directory.characters).toHaveLength(3);
+    expect(directory.recipes).toEqual([]);
+    expect(directory.characters.every((c) => c.id !== legacyId)).toBe(true);
+    await request(app)
+      .get('/api/profs/characters/' + legacyId)
+      .expect(404);
     const changed = new ProfessionService(
       db,
       { ...settings, profileNamespace: 'profile-other-us' },
       source,
     );
     await expect(changed.ensureScope()).rejects.toThrow('configuration differs');
+    await expect(
+      new ProfessionService(db, { ...settings, rulesetId: 1 }, source).ensureScope(),
+    ).rejects.toThrow('configuration differs');
   });
 });

@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { expect, it } from 'vitest';
@@ -6,6 +6,57 @@ import request from 'supertest';
 import { embeddedDatabase, migrate } from './database.js';
 import { bootstrap, hashPassword } from './auth.js';
 import { createApp } from './app.js';
+it('adds Forever identities while retaining the retail proof-of-concept snapshots', async () => {
+  const engine = new PGlite();
+  const db = embeddedDatabase(engine);
+  try {
+    await db.query(
+      'CREATE TABLE schema_migrations(name text PRIMARY KEY,checksum text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())',
+    );
+    const directory = new URL('../migrations/', import.meta.url);
+    for (const name of (await readdir(directory))
+      .filter((n) => n.endsWith('.sql') && n < '011_')
+      .sort()) {
+      const sql = (await readFile(new URL(name, directory), 'utf8')).replaceAll('\r\n', '\n');
+      await engine.exec(sql);
+      await db.query('INSERT INTO schema_migrations(name,checksum) VALUES($1,$2)', [
+        name,
+        createHash('sha256').update(sql).digest('hex'),
+      ]);
+    }
+    await db.query(
+      "INSERT INTO profs_scopes(id,game_version,region,profile_namespace,data_namespace,guild_name,guild_realm) VALUES('retail:us','retail','us','profile-us','static-us','Rewound','area-52')",
+    );
+    const id = randomUUID();
+    await db.query(
+      "INSERT INTO profs_characters(id,scope_id,api_id,name,realm,snapshot,in_roster) VALUES($1,'retail:us',1,'Legacy','area-52','{\"tiers\":[]}',true)",
+      [id],
+    );
+    const before = (await db.query('SELECT * FROM profs_characters WHERE id=$1', [id])).rows[0];
+    await migrate(db);
+    expect(
+      (await db.query('SELECT * FROM profs_characters WHERE id=$1', [id])).rows[0],
+    ).toMatchObject({ ...before, slug: '' });
+    expect(
+      (await db.query("SELECT * FROM profs_scopes WHERE id='retail:us'")).rows[0],
+    ).toMatchObject({ game_version: 'retail', guild_realm: 'area-52', guild_slug: '' });
+    await db.query(
+      "INSERT INTO profs_scopes(id,game_version,region,profile_namespace,data_namespace,guild_name,guild_slug) VALUES('forever:us','forever','us','profile-forever-us','static-forever-us','Rewound','rewound')",
+    );
+    await db.query(
+      "INSERT INTO profs_characters(id,scope_id,api_id,name,slug) VALUES($1,'forever:us',1,'Legacy Smith','legacy-smith')",
+      [randomUUID()],
+    );
+    await expect(
+      db.query(
+        "INSERT INTO profs_characters(id,scope_id,api_id,name,slug) VALUES($1,'forever:us',2,'Other Smith','legacy-smith')",
+        [randomUUID()],
+      ),
+    ).rejects.toMatchObject({ code: '23505' });
+  } finally {
+    await db.close();
+  }
+});
 it('upgrades an existing roster without changing its login, characters or compositions', async () => {
   const engine = new PGlite(),
     db = embeddedDatabase(engine);

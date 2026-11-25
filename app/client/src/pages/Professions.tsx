@@ -49,12 +49,11 @@ const stateLabel = (c: DirectoryCharacter) =>
       : c.lastSuccess
         ? 'Fetched'
         : 'Not fetched';
-const identity = (c: DirectoryCharacter) => `${c.name} — ${c.realm}`;
+const identity = (c: DirectoryCharacter) => c.name;
 function CharacterLabel({ character: c }: { character: DirectoryCharacter }) {
   return (
     <span>
       <CharacterName name={c.name} classId={c.classId} />
-      <span className="profs-realm"> — {c.realm}</span>
     </span>
   );
 }
@@ -62,7 +61,7 @@ function knownCharacters(ids: string[], characters: DirectoryCharacter[]) {
   const known = new Set(ids);
   return characters
     .filter((c) => known.has(c.id))
-    .sort((a, b) => a.name.localeCompare(b.name) || a.realm.localeCompare(b.realm));
+    .sort((a, b) => a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
 }
 function CrafterCount({
   recipe,
@@ -178,10 +177,7 @@ function CrafterButton({
     >
       <span className="profs-crafter-identity">
         <CharacterName name={c.name} classId={c.classId} />
-        <span className="profs-crafter-realm">
-          {c.realm}
-          {c.error ? ' · cached' : ''}
-        </span>
+        {c.error && <span className="profs-crafter-status">Cached</span>}
       </span>
       <ArrowRight size={14} aria-hidden="true" />
     </button>
@@ -285,7 +281,7 @@ export default function Professions({ userId }: { userId: string | null }) {
   const fetched = data.characters.filter((c) => c.lastSuccess).length;
   const roster = data.characters.filter((c) => c.inRoster).length;
   const visibleCharacters = data.characters.filter((c) =>
-    `${c.name} ${c.realm} ${c.member || ''}`.toLowerCase().includes(memberSearch.toLowerCase()),
+    `${c.name} ${c.member || ''}`.toLowerCase().includes(memberSearch.toLowerCase()),
   );
   const activeCharacter = selected
     ? data.characters.find((c) => c.id === selected.id) || selected
@@ -371,7 +367,7 @@ export default function Professions({ userId }: { userId: string | null }) {
                 ))}
               </select>
             </Field>
-            <Field label="Expansion">
+            <Field label="Skill tier">
               <select
                 value={expansion}
                 onChange={(e) => {
@@ -379,7 +375,7 @@ export default function Professions({ userId }: { userId: string | null }) {
                   setPage(1);
                 }}
               >
-                <option value="">All expansions</option>
+                <option value="">All skill tiers</option>
                 {data.expansions.map((p) => (
                   <option key={p}>{p}</option>
                 ))}
@@ -428,7 +424,8 @@ export default function Professions({ userId }: { userId: string | null }) {
                       onInspect={() => setRecipe(r)}
                       description={
                         <>
-                          {r.profession} · {r.expansion}
+                          {r.profession}
+                          {r.expansion !== r.profession && ` · ${r.expansion}`}
                           {r.items.length > 1 && ` · ${r.items.length} items`}
                           <RecipeMaterials id={r.id} name={r.name} />
                         </>
@@ -499,7 +496,7 @@ export default function Professions({ userId }: { userId: string | null }) {
             <input
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
-              placeholder="Character, realm, or member"
+              placeholder="Character or member"
               maxLength={100}
             />
           </Field>
@@ -551,7 +548,8 @@ export default function Professions({ userId }: { userId: string | null }) {
           <div className="profs-item-heading">
             <div>
               <p className="profs-caption">
-                {recipe.profession} · {recipe.expansion}
+                {recipe.profession}
+                {recipe.expansion !== recipe.profession && ` · ${recipe.expansion}`}
               </p>
               <div className="profs-wowhead-links">
                 {(activeRecipe || recipe).items.length ? (
@@ -626,7 +624,9 @@ export default function Professions({ userId }: { userId: string | null }) {
               </p>
             )}
             <p>Blizzard data can lag the game. Confirm with your crafter.</p>
-            <p>Forever Profile API and learned recipes remain unverified.</p>
+            <p>
+              WoW Forever · {data.ruleset.name} · {data.region.toUpperCase()}
+            </p>
           </div>
         </details>
       </footer>
@@ -689,7 +689,7 @@ function RecipeMembers({
   if (!query.data) return <p>Loading recipe coverage...</p>;
   const providers = knownCharacters(query.data.characterIds, characters);
   const filtered = providers.filter((c) =>
-    `${c.name} ${c.realm} ${c.member || ''} ${c.main || ''}`
+    `${c.name} ${c.member || ''} ${c.main || ''}`
       .toLowerCase()
       .includes(search.trim().toLowerCase()),
   );
@@ -709,7 +709,7 @@ function RecipeMembers({
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Name, realm, or member"
+                placeholder="Name or member"
                 maxLength={100}
               />
             </Field>
@@ -815,7 +815,8 @@ function CharacterDetail({
             {query.data.snapshot.tiers.map((t, i) => (
               <details key={`${t.professionId}:${t.tierId}:${i}`}>
                 <summary>
-                  <strong>{t.profession}</strong> · {t.expansion}
+                  <strong>{t.profession}</strong>
+                  {t.expansion !== t.profession && ` · ${t.expansion}`}
                   <span>
                     {t.skill ?? '?'} / {t.maxSkill ?? '?'} ·{' '}
                     {t.recipesAvailable ? `${t.recipes.length} recipes` : 'Recipes unavailable'}

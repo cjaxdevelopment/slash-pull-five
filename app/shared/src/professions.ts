@@ -15,7 +15,7 @@ export interface ProfessionSnapshot {
 export interface DirectoryCharacter {
   id: string;
   name: string;
-  realm: string;
+  slug: string;
   classId: number | null;
   inRoster: boolean;
   seed: boolean;
@@ -56,7 +56,7 @@ export interface ProfessionDirectory {
   gameVersion: string;
   region: string;
   guild: string;
-  realm: string;
+  ruleset: { id: number; name: string };
   configured: boolean;
   admin: boolean;
   rosterSynced: string | null;

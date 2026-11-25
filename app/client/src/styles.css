@@ -6,11 +6,6 @@
 :root[data-theme='dark'] .wow-character-name {
   color: var(--character-color, var(--text));
 }
-.profs-realm {
-  color: var(--muted);
-  font-size: 0.9em;
-  font-weight: 400;
-}
 .profs-footer {
   display: flex;
   justify-content: space-between;
@@ -659,7 +654,7 @@
   font-weight: 600;
   line-height: 20px;
 }
-.profs-crafter-realm {
+.profs-crafter-status {
   color: var(--muted);
   font-size: 12px;
   line-height: 16px;

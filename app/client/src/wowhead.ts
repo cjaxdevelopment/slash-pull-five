@@ -90,8 +90,8 @@ export function useWowheadTooltips(contentKey: string) {
   }, [contentKey]);
 }
 export function wowheadLink(gameVersion: string, name: string, itemId?: number) {
-  if (gameVersion === 'retail' && itemId) return `https://www.wowhead.com/item=${itemId}`;
-  return `https://www.wowhead.com/search?q=${encodeURIComponent(name)}`;
+  if (gameVersion === 'forever' && itemId) return `https://www.wowhead.com/forever/item=${itemId}`;
+  return `https://www.wowhead.com/forever/search?q=${encodeURIComponent(name)}`;
 }
 
 // Wowhead adds icon nodes and quality classes to anchors. Give it an isolated
@@ -140,8 +140,8 @@ export function WowheadItemLink({
       link.rel = 'noopener noreferrer';
     }
     link.textContent = name;
-    if (gameVersion === 'retail' && itemId) {
-      link.dataset.wowhead = `item=${itemId}`;
+    if (gameVersion === 'forever' && itemId) {
+      link.dataset.wowhead = `item=${itemId}&domain=forever`;
       link.dataset.whIconSize = 'large';
     }
     root.replaceChildren(link);
@@ -185,7 +185,8 @@ export function WowheadItemLink({
           : undefined,
         'data-wh-iconize-link': 'false',
         'data-wh-rename-link': 'false',
-        'data-wowhead': gameVersion === 'retail' && itemId ? `item=${itemId}` : undefined,
+        'data-wowhead':
+          gameVersion === 'forever' && itemId ? `item=${itemId}&domain=forever` : undefined,
       },
       fallback,
     ),

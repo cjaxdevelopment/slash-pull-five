@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('professions route searches mapped items, displays cross-realm coverage and approves account links', async ({
+test('professions route searches mapped items, displays Forever character coverage and approves account links', async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -35,7 +35,7 @@ test('professions route searches mapped items, displays cross-realm coverage and
   await expect(page.getByRole('dialog')).toContainText('2 crafters');
   await page
     .getByRole('dialog')
-    .getByRole('button', { name: 'FixtureAlt — other-realm', exact: true })
+    .getByRole('button', { name: 'FixtureAlt Smith', exact: true })
     .click();
   await expect(
     page.getByRole('dialog').getByRole('button', { name: 'Request refresh', exact: true }),
@@ -47,7 +47,7 @@ test('professions route searches mapped items, displays cross-realm coverage and
     .getByRole('link', { name: 'Fixture shared recipe (Wowhead)', exact: true });
   await characterRecipe.hover();
   await expect(page.getByRole('tooltip')).toContainText('Fixture reagent');
-  await expect(characterRecipe).toHaveAttribute('href', 'https://www.wowhead.com/item=700');
+  await expect(characterRecipe).toHaveAttribute('href', 'https://www.wowhead.com/forever/item=700');
   await characterRecipe.press('Escape');
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.getByRole('button', { name: 'Close dialog' }).click();
@@ -73,17 +73,17 @@ test('professions route searches mapped items, displays cross-realm coverage and
   await page.screenshot({ path: '.local/qa-profs-fixtures-recipes-desktop.png', fullPage: true });
   await expect(
     page.getByRole('link', { name: 'View Fixture shared recipe on Wowhead', exact: true }),
-  ).toHaveAttribute('href', 'https://www.wowhead.com/item=700');
+  ).toHaveAttribute('href', 'https://www.wowhead.com/forever/item=700');
   await page.getByRole('button', { name: 'Fixture shared recipe', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('2 crafters');
   await expect(page.getByRole('dialog')).not.toContainText('Unknown coverage');
   await expect(page.getByRole('dialog')).not.toContainText('Not listed');
   await expect(
     page.getByRole('dialog').getByRole('link', { name: 'Fixture crafted potion', exact: true }),
-  ).toHaveAttribute('href', 'https://www.wowhead.com/item=700');
+  ).toHaveAttribute('href', 'https://www.wowhead.com/forever/item=700');
   await expect(
     page.getByRole('button', { name: 'Fixture shared recipe', exact: true }),
-  ).toHaveAttribute('data-wowhead', 'item=700');
+  ).toHaveAttribute('data-wowhead', 'item=700&domain=forever');
 
   await expect(page.locator('.profs-item-icon').first()).toHaveAttribute(
     'src',
@@ -94,21 +94,21 @@ test('professions route searches mapped items, displays cross-realm coverage and
   await expect(page.getByRole('dialog')).toContainText('2 crafters');
   await page
     .getByRole('dialog')
-    .getByRole('button', { name: 'FixtureAlt — other-realm', exact: true })
+    .getByRole('button', { name: 'FixtureAlt Smith', exact: true })
     .click();
   await expect(page.getByRole('dialog')).toContainText('50 / 100');
   await page.getByRole('dialog').locator('summary').click();
   await expect(page.getByRole('dialog')).toContainText('Fixture shared recipe');
   await page.getByRole('button', { name: 'Close dialog' }).click();
   await page.getByRole('button', { name: 'Characters', exact: true }).click();
-  await page.getByRole('button', { name: 'FixtureUnfetched — area-52', exact: true }).click();
+  await page.getByRole('button', { name: 'FixtureUnfetched Smith', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Recipes are unknown');
   await expect(page.getByRole('dialog')).toContainText('Not fetched');
   await page.getByRole('button', { name: 'Close dialog' }).click();
   await page.getByRole('button', { name: 'My characters', exact: true }).click();
   await page
     .getByLabel('Character to link', { exact: true })
-    .selectOption({ label: 'FixtureCrafter — area-52' });
+    .selectOption({ label: 'FixtureCrafter Smith' });
   await page.getByRole('button', { name: 'Request administrator approval', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Approve', exact: true })).toBeDisabled();
   await page.getByLabel('I have independently verified ownership', { exact: false }).check();
@@ -116,7 +116,7 @@ test('professions route searches mapped items, displays cross-realm coverage and
   await expect(page.getByLabel('Main character', { exact: true }).locator('option')).toHaveCount(2);
   await page
     .getByLabel('Main character', { exact: true })
-    .selectOption({ label: 'FixtureCrafter — area-52' });
+    .selectOption({ label: 'FixtureCrafter Smith' });
   await page.getByLabel('Preferred Discord contact', { exact: true }).fill('fixture-contact');
   await page.getByRole('button', { name: 'Save contact & main', exact: true }).click();
   await page.getByRole('button', { name: 'Characters', exact: true }).click();
@@ -129,7 +129,7 @@ test('professions route searches mapped items, displays cross-realm coverage and
   ).toHaveCSS('color', 'rgb(63, 199, 235)');
   await expect(
     page.locator('.profs-character-card .wow-character-name').filter({ hasText: 'FixtureAlt' }),
-  ).toHaveCSS('color', 'rgb(51, 147, 127)');
+  ).toHaveCSS('color', 'rgb(0, 112, 221)');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('link', { name: 'Professions', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'TEST FIXTURES Professions' })).toBeVisible();
